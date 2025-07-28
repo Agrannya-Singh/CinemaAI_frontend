@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useCallback, useTransition, useEffect } from 'react';
@@ -147,130 +148,128 @@ export default function Home() {
       </header>
 
       <main className="flex-1 container mx-auto p-4 sm:p-6 lg:p-8 space-y-12">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
-            <div className="space-y-8">
-                <section>
-                    <h2 className="text-2xl font-headline font-semibold mb-4 text-primary">
-                        Search & Select Movies
-                    </h2>
-                    <div className="relative mb-6">
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground">
-                        {isSearching ? <LoaderCircle className="animate-spin text-primary" /> : <Search />}
-                        </div>
-                        <Input
-                        type="text"
-                        placeholder="Search by title or IMDb ID..."
-                        className="pl-10 text-base bg-background border-primary/50 focus:ring-primary"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                </section>
-                <section>
-                    <Card className="border-primary/20">
-                        <CardHeader>
-                            <CardTitle className="font-headline text-xl text-primary">Your Selections</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                        <div>
-                        <h3 className="font-semibold mb-3">1. Pick Your Genres</h3>
-                        <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
-                            {allGenres.map((genre) => (
-                            <div key={genre} className="flex items-center space-x-2">
-                                <Checkbox
-                                id={genre}
-                                onCheckedChange={() => handleSelectGenre(genre)}
-                                checked={selectedGenres.includes(genre)}
-                                className="border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                                />
-                                <Label htmlFor={genre} className="text-sm font-normal cursor-pointer">
-                                {genre}
-                                </Label>
-                            </div>
-                            ))}
-                        </div>
-                        </div>
+        <div className="space-y-8">
+            <section>
+                <h2 className="text-2xl font-headline font-semibold mb-4 text-primary">
+                    Search & Select Movies
+                </h2>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="lg:col-span-1">
+                      <div className="relative mb-6">
+                          <div className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground">
+                          {isSearching ? <LoaderCircle className="animate-spin text-primary" /> : <Search />}
+                          </div>
+                          <Input
+                          type="text"
+                          placeholder="Search by title or IMDb ID..."
+                          className="pl-10 text-base bg-background border-primary/50 focus:ring-primary"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          />
+                      </div>
+                      <Card className="border-primary/20">
+                          <CardHeader>
+                              <CardTitle className="font-headline text-xl text-primary">Your Selections</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-6">
+                              <div>
+                                  <h3 className="font-semibold mb-3">1. Pick Your Genres</h3>
+                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                      {allGenres.map((genre) => (
+                                      <div key={genre} className="flex items-center space-x-2">
+                                          <Checkbox
+                                          id={genre}
+                                          onCheckedChange={() => handleSelectGenre(genre)}
+                                          checked={selectedGenres.includes(genre)}
+                                          className="border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                                          />
+                                          <Label htmlFor={genre} className="text-sm font-normal cursor-pointer">
+                                          {genre}
+                                          </Label>
+                                      </div>
+                                      ))}
+                                  </div>
+                              </div>
 
-                        <div>
-                        <h3 className="font-semibold mb-3">2. Your Selected Movies ({selectedMovies.length})</h3>
-                        <ScrollArea className="h-40 rounded-md border border-primary/20 p-2">
-                            {selectedMovieDetails.length > 0 ? (
-                            <ul className="space-y-1">
-                                {selectedMovieDetails.map(movie => (
-                                <li key={movie.id} className="text-sm text-muted-foreground">{movie.title}</li>
-                                ))}
-                            </ul>
-                            ) : (
-                            <p className="text-sm text-center text-muted-foreground p-4">Select movies from the list below.</p>
-                            )}
-                        </ScrollArea>
-                        </div>
-                        
-                        <Button 
-                        size="lg" 
-                        className="w-full font-bold bg-primary hover:bg-primary/90 text-primary-foreground"
-                        onClick={handleGetRecommendations}
-                        disabled={isPending || selectedMovies.length === 0 || selectedGenres.length === 0}
-                        >
-                        {isPending && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                        Generate Recommendations
-                        </Button>
-                    </CardContent>
-                    </Card>
-                </section>
-
-                <section id="recommendations-section">
-                    <h2 className="text-2xl font-headline font-semibold mb-4 text-primary">
-                        Your AI Recommendations
-                    </h2>
-                    {isPending ? (
-                        <div className="flex justify-center items-center h-64">
+                              <div>
+                                  <h3 className="font-semibold mb-3">2. Your Selected Movies ({selectedMovies.length})</h3>
+                                  <ScrollArea className="h-40 rounded-md border border-primary/20 p-2">
+                                      {selectedMovieDetails.length > 0 ? (
+                                      <ul className="space-y-1">
+                                          {selectedMovieDetails.map(movie => (
+                                          <li key={movie.id} className="text-sm text-muted-foreground">{movie.title}</li>
+                                          ))}
+                                      </ul>
+                                      ) : (
+                                      <p className="text-sm text-center text-muted-foreground p-4">Select movies from the list below.</p>
+                                      )}
+                                  </ScrollArea>
+                              </div>
+                              
+                              <Button 
+                              size="lg" 
+                              className="w-full font-bold bg-primary hover:bg-primary/90 text-primary-foreground"
+                              onClick={handleGetRecommendations}
+                              disabled={isPending || selectedMovies.length === 0 || selectedGenres.length === 0}
+                              >
+                              {isPending && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                              Generate Recommendations
+                              </Button>
+                          </CardContent>
+                      </Card>
+                  </div>
+                  <div className='lg:col-span-2'>
+                    <h3 className="text-xl font-headline font-semibold mb-4 text-primary/80">
+                        Available Movies
+                    </h3>
+                    {isFetchingInitialMovies ? (
+                      <div className="flex justify-center items-center h-64">
                         <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
-                        </div>
-                    ) : recommendations.length > 0 ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                        {recommendations.map((movie) => (
-                            <MovieCard
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                        {moviesToDisplay.map((movie) => (
+                          <MovieCard
                             key={movie.id}
                             movie={movie}
-                            isSelected={false} // Recommendations are not selectable
-                            onSelect={() => {}} // No action on select
-                            />
+                            isSelected={selectedMovies.includes(movie.id)}
+                            onSelect={handleSelectMovie}
+                          />
                         ))}
-                        </div>
-                    ) : (
-                        <Card className="flex flex-col items-center justify-center text-center p-8 h-64 bg-background border-primary/20">
-                        <Film className="h-12 w-12 text-muted-foreground mb-4" />
-                        <p className="text-muted-foreground">
-                            Your personalized movie recommendations will appear here.
-                        </p>
-                        </Card>
+                      </div>
                     )}
-                </section>
-            </div>
-            
-            <div className='lg:col-span-2'>
-              <h2 className="text-2xl font-headline font-semibold mb-4 text-primary">
-                  Available Movies
-              </h2>
-              {isFetchingInitialMovies ? (
-                <div className="flex justify-center items-center h-64">
-                   <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
-                 </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                  {moviesToDisplay.map((movie) => (
-                    <MovieCard
-                      key={movie.id}
-                      movie={movie}
-                      isSelected={selectedMovies.includes(movie.id)}
-                      onSelect={handleSelectMovie}
-                    />
-                  ))}
+                  </div>
                 </div>
-              )}
-            </div>
-
+            </section>
+            
+            <section id="recommendations-section">
+                <h2 className="text-2xl font-headline font-semibold mb-4 text-primary">
+                    Your AI Recommendations
+                </h2>
+                {isPending ? (
+                    <div className="flex justify-center items-center h-64">
+                    <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
+                    </div>
+                ) : recommendations.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                    {recommendations.map((movie) => (
+                        <MovieCard
+                        key={movie.id}
+                        movie={movie}
+                        isSelected={false} // Recommendations are not selectable
+                        onSelect={() => {}} // No action on select
+                        />
+                    ))}
+                    </div>
+                ) : (
+                    <Card className="flex flex-col items-center justify-center text-center p-8 h-64 bg-background border-primary/20">
+                    <Film className="h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">
+                        Your personalized movie recommendations will appear here.
+                    </p>
+                    </Card>
+                )}
+            </section>
         </div>
       </main>
     </div>
