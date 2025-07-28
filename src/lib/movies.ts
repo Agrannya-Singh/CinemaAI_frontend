@@ -15,7 +15,7 @@ const movies: Movie[] = [
     title: 'The Shawshank Redemption',
     year: '1994',
     genre: 'Drama',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'prison drama'
   },
   {
@@ -24,7 +24,7 @@ const movies: Movie[] = [
     title: 'The Godfather',
     year: '1972',
     genre: 'Crime',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'mafia film'
   },
   {
@@ -33,7 +33,7 @@ const movies: Movie[] = [
     title: 'The Dark Knight',
     year: '2008',
     genre: 'Action',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'superhero movie'
   },
   {
@@ -42,7 +42,7 @@ const movies: Movie[] = [
     title: "Schindler's List",
     year: '1993',
     genre: 'Drama',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'historical film'
   },
   {
@@ -51,7 +51,7 @@ const movies: Movie[] = [
     title: 'The Lord of the Rings: The Return of the King',
     year: '2003',
     genre: 'Fantasy',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'fantasy battle'
   },
   {
@@ -60,7 +60,7 @@ const movies: Movie[] = [
     title: 'Pulp Fiction',
     year: '1994',
     genre: 'Crime',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'crime movie'
   },
   {
@@ -69,7 +69,7 @@ const movies: Movie[] = [
     title: 'Inception',
     year: '2010',
     genre: 'Sci-Fi',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'sci-fi thriller'
   },
   {
@@ -78,7 +78,7 @@ const movies: Movie[] = [
     title: 'The Matrix',
     year: '1999',
     genre: 'Sci-Fi',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'cyberpunk action'
   },
   {
@@ -87,7 +87,7 @@ const movies: Movie[] = [
     title: 'Forrest Gump',
     year: '1994',
     genre: 'Drama',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'man on bench'
   },
   {
@@ -96,7 +96,7 @@ const movies: Movie[] = [
     title: 'Star Wars: Episode V - The Empire Strikes Back',
     year: '1980',
     genre: 'Sci-Fi',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'space opera'
   },
   {
@@ -105,7 +105,7 @@ const movies: Movie[] = [
     title: 'The Lord of the Rings: The Fellowship of the Ring',
     year: '2001',
     genre: 'Fantasy',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'fantasy adventure'
   },
   {
@@ -114,7 +114,7 @@ const movies: Movie[] = [
     title: 'Fight Club',
     year: '1999',
     genre: 'Drama',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'psychological thriller'
   },
   {
@@ -123,7 +123,7 @@ const movies: Movie[] = [
     title: 'Goodfellas',
     year: '1990',
     genre: 'Crime',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'gangster movie'
   },
   {
@@ -132,7 +132,7 @@ const movies: Movie[] = [
     title: 'Saving Private Ryan',
     year: '1998',
     genre: 'War',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'war film'
   },
   {
@@ -141,7 +141,7 @@ const movies: Movie[] = [
     title: 'Interstellar',
     year: '2014',
     genre: 'Sci-Fi',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'space exploration'
   },
     {
@@ -150,7 +150,7 @@ const movies: Movie[] = [
     title: 'Se7en',
     year: '1995',
     genre: 'Thriller',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'crime thriller'
   },
   {
@@ -159,7 +159,7 @@ const movies: Movie[] = [
     title: 'The Silence of the Lambs',
     year: '1991',
     genre: 'Thriller',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'psychological horror'
   },
   {
@@ -168,7 +168,7 @@ const movies: Movie[] = [
     title: 'Parasite',
     year: '2019',
     genre: 'Thriller',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'social thriller'
   },
   {
@@ -177,7 +177,7 @@ const movies: Movie[] = [
     title: 'Léon: The Professional',
     year: '1994',
     genre: 'Action',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'hitman drama'
   },
   {
@@ -186,7 +186,7 @@ const movies: Movie[] = [
     title: 'The Green Mile',
     year: '1999',
     genre: 'Fantasy',
-    poster: 'https://placehold.co/300x450/4B0082/E6E6FA',
+    poster: 'https://placehold.co/300x450.png',
     posterHint: 'fantasy drama'
   },
 ];
