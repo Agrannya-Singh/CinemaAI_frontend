@@ -15,6 +15,7 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
         const errorBody = await response.text();
+        console.error('Failed to fetch recommendations from backend:', errorBody);
         return NextResponse.json({ error: 'Failed to fetch recommendations', details: errorBody }, { status: response.status });
     }
 
