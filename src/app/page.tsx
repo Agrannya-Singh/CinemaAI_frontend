@@ -26,7 +26,7 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>(['Any']);
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
   const [isPending, startTransition] = useTransition();
 
@@ -285,6 +285,9 @@ export default function Home() {
             )}
         </section>
       </main>
+      <footer className="text-center p-4 text-muted-foreground">
+        Made by Agrannya SIngh
+      </footer>
     </div>
   );
 }
