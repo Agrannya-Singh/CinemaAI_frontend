@@ -42,12 +42,13 @@ export default function Home() {
   }, []);
 
   const handleSearch = useCallback(async (query: string) => {
-    if (query.length < 3) {
+    const trimmedQuery = query.trim();
+    if (trimmedQuery.length < 3) {
       setMoviesToDisplay(allMovies);
       return;
     }
     setIsSearching(true);
-    const results = await searchMovies(query);
+    const results = await searchMovies(trimmedQuery);
     setMoviesToDisplay(results); // Always show search results, even if empty, to indicate the search was performed.
     setIsSearching(false);
   }, [allMovies]);
@@ -227,7 +228,7 @@ export default function Home() {
         
         <section>
               <h2 className="text-2xl font-headline font-semibold mb-4 text-primary">
-                  {searchTerm.length >=3 ? 'Search Results' : 'Available Movies'}
+                  {searchTerm.trim().length >=3 ? 'Search Results' : 'Available Movies'}
               </h2>
               {isFetchingInitialMovies ? (
                 <div className="flex justify-center items-center h-64">
