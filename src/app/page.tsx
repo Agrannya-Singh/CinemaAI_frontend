@@ -1,3 +1,210 @@
+'use client';
+
+import { useState, useMemo, useCallback, useTransition } from 'react';
+import { Movie, getMovies, getGenres, getMoviesByIds, searchMovies } from '@/lib/movies';
+import { personalizeRecommendations } from '@/ai/flows/personalize-recommendations';
+import { MovieCard } from '@/components/movie-card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
+import { Search, Film, LoaderCircle } from 'lucide-react';
+
 export default function Home() {
-  return <></>;
+  const { toast } = useToast();
+  const allMovies = useMemo(() => getMovies(), []);
+  const allGenres = useMemo(() => getGenres(), []);
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [recommendations, setRecommendations] = useState<Movie[]>([]);
+  const [isPending, startTransition] = useTransition();
+
+  const moviesToDisplay = useMemo(() => {
+    if (!searchTerm) {
+      return allMovies;
+    }
+    return searchMovies(searchTerm);
+  }, [searchTerm, allMovies]);
+
+  const handleSelectMovie = useCallback((movieId: string) => {
+    setSelectedMovies((prev) =>
+      prev.includes(movieId)
+        ? prev.filter((id) => id !== movieId)
+        : [...prev, movieId]
+    );
+  }, []);
+
+  const handleSelectGenre = (genre: string) => {
+    setSelectedGenres((prev) =>
+      prev.includes(genre)
+        ? prev.filter((g) => g !== genre)
+        : [...prev, genre]
+    );
+  };
+  
+  const handleGetRecommendations = async () => {
+    if (selectedMovies.length === 0 || selectedGenres.length === 0) {
+      toast({
+        title: 'Selection Incomplete',
+        description: 'Please select at least one movie and one genre to get recommendations.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const result = await personalizeRecommendations({
+          movieIds: selectedMovies,
+          genrePreferences: selectedGenres.join(', '),
+        });
+        const recommendedMovieData = getMoviesByIds(result.personalizedRecommendations);
+        setRecommendations(recommendedMovieData);
+        document.getElementById('recommendations-section')?.scrollIntoView({ behavior: 'smooth' });
+      } catch (error) {
+        console.error('Error getting recommendations:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to get recommendations. Please try again.',
+          variant: 'destructive',
+        });
+      }
+    });
+  };
+
+  const selectedMovieDetails = useMemo(
+    () => getMoviesByIds(selectedMovies),
+    [selectedMovies]
+  );
+  
+  return (
+    <div className="flex flex-col min-h-screen bg-background">
+      <header className="sticky top-0 z-20 w-full bg-background/80 backdrop-blur-sm border-b">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center h-16">
+          <Film className="h-8 w-8 text-primary" />
+          <h1 className="text-2xl md:text-3xl font-bold font-headline ml-3 text-primary">
+            CinemaAI
+          </h1>
+        </div>
+      </header>
+
+      <main className="flex-1 container mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
+          <div className="space-y-12">
+            <section>
+              <h2 className="text-2xl font-headline font-semibold mb-4">
+                Search & Select Movies
+              </h2>
+              <div className="relative mb-6">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search by title or IMDb ID..."
+                  className="pl-10 text-base"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
+                {moviesToDisplay.map((movie) => (
+                  <MovieCard
+                    key={movie.id}
+                    movie={movie}
+                    isSelected={selectedMovies.includes(movie.id)}
+                    onSelect={handleSelectMovie}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section id="recommendations-section">
+              <h2 className="text-2xl font-headline font-semibold mb-4">
+                Your AI Recommendations
+              </h2>
+              {isPending ? (
+                 <div className="flex justify-center items-center h-64">
+                   <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
+                 </div>
+              ) : recommendations.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {recommendations.map((movie) => (
+                    <MovieCard
+                      key={movie.id}
+                      movie={movie}
+                      isSelected={selectedMovies.includes(movie.id)}
+                      onSelect={handleSelectMovie}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <Card className="flex flex-col items-center justify-center text-center p-8 h-64">
+                   <Film className="h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">
+                    Your personalized movie recommendations will appear here.
+                  </p>
+                </Card>
+              )}
+            </section>
+          </div>
+
+          <aside className="lg:sticky top-24 h-fit">
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="font-headline text-xl">Create Your Perfect Movie Night</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <h3 className="font-semibold mb-3">1. Pick Your Genres</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {allGenres.map((genre) => (
+                      <div key={genre} className="flex items-center space-x-2">
+                         <Checkbox
+                          id={genre}
+                          onCheckedChange={() => handleSelectGenre(genre)}
+                          checked={selectedGenres.includes(genre)}
+                        />
+                        <Label htmlFor={genre} className="text-sm font-normal cursor-pointer">
+                          {genre}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-3">2. Your Selected Movies ({selectedMovies.length})</h3>
+                  <ScrollArea className="h-40 rounded-md border p-2">
+                    {selectedMovieDetails.length > 0 ? (
+                      <ul className="space-y-1">
+                        {selectedMovieDetails.map(movie => (
+                          <li key={movie.id} className="text-sm text-muted-foreground">{movie.title}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-center text-muted-foreground p-4">Select movies from the list.</p>
+                    )}
+                  </ScrollArea>
+                </div>
+                
+                <Button 
+                  size="lg" 
+                  className="w-full font-bold"
+                  onClick={handleGetRecommendations}
+                  disabled={isPending || selectedMovies.length === 0 || selectedGenres.length === 0}
+                >
+                  {isPending && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                  Generate Recommendations
+                </Button>
+              </CardContent>
+            </Card>
+          </aside>
+        </div>
+      </main>
+    </div>
+  );
 }
