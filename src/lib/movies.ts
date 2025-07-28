@@ -83,14 +83,16 @@ export async function getMoviesByIds(ids: string[]): Promise<Movie[]> {
   if (ids.length === 0) {
     return [];
   }
-  // This is a bit inefficient. A better API would have a /movies?ids=... endpoint.
-  // For now, we search for each movie by its ID.
-  const moviePromises = ids.map(id => searchMovies(id));
-  const moviesArrays = await Promise.all(moviePromises);
-  // Flatten the array of arrays and remove duplicates
-  const moviesMap = new Map<string, Movie>();
-  moviesArrays.flat().forEach(movie => moviesMap.set(movie.id, movie));
-  return Array.from(moviesMap.values());
+  // Instead of searching, we'll get all movies and filter.
+  // This is more robust if the search function has side-effects or is rate-limited.
+  try {
+    const allMovies = await getMovies();
+    const selected = allMovies.filter(movie => ids.includes(movie.id));
+    return selected;
+  } catch (error) {
+    console.error('Error in getMoviesByIds:', error);
+    return [];
+  }
 }
 
 export function getGenres(): string[] {
