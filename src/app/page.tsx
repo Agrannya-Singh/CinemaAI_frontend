@@ -44,14 +44,30 @@ export default function Home() {
   const handleSearch = useCallback(async (query: string) => {
     const trimmedQuery = query.trim();
     if (trimmedQuery.length < 3) {
-      setMoviesToDisplay(allMovies);
-      return;
+        setMoviesToDisplay(allMovies);
+        return;
     }
     setIsSearching(true);
-    const results = await searchMovies(trimmedQuery);
-    setMoviesToDisplay(results); // Always show search results, even if empty, to indicate the search was performed.
-    setIsSearching(false);
-  }, [allMovies]);
+    try {
+        // Client-side search for case-insensitivity
+        const lowercasedQuery = trimmedQuery.toLowerCase();
+        const results = allMovies.filter(movie => 
+            movie.title.toLowerCase().includes(lowercasedQuery) || 
+            movie.id.toLowerCase() === lowercasedQuery
+        );
+        setMoviesToDisplay(results);
+    } catch (error) {
+        console.error("Search failed:", error);
+        toast({
+            title: 'Search Error',
+            description: 'Could not perform search. Please try again.',
+            variant: 'destructive',
+        });
+        setMoviesToDisplay(allMovies);
+    } finally {
+        setIsSearching(false);
+    }
+  }, [allMovies, toast]);
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
