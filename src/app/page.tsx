@@ -152,7 +152,7 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             <div className="lg:col-span-1 lg:sticky top-20">
               <h2 className="text-2xl font-headline font-semibold mb-4 text-primary">
-                  Search & Select
+                  Search &amp; Select
               </h2>
               <div className="relative mb-6">
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground">
