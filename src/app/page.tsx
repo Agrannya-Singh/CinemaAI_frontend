@@ -42,7 +42,7 @@ export default function Home() {
   }, []);
 
   const handleSearch = useCallback(async (query: string) => {
-    if (!query) {
+    if (query.length < 3) {
       setMoviesToDisplay(allMovies);
       return;
     }
@@ -165,7 +165,7 @@ export default function Home() {
                   </div>
                   <Input
                   type="text"
-                  placeholder="Search by title or IMDb ID..."
+                  placeholder="Search by title or IMDb ID (min 3 chars)..."
                   className="pl-10 text-base bg-background border-primary/50 focus:ring-primary"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -227,7 +227,7 @@ export default function Home() {
         
         <section>
               <h2 className="text-2xl font-headline font-semibold mb-4 text-primary">
-                  {searchTerm ? 'Search Results' : 'Available Movies'}
+                  {searchTerm.length >=3 ? 'Search Results' : 'Available Movies'}
               </h2>
               {isFetchingInitialMovies ? (
                 <div className="flex justify-center items-center h-64">
