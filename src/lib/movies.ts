@@ -8,6 +8,9 @@ export interface Movie {
   genre: string;
   poster: string;
   posterHint: string;
+  overview: string;
+  cast: string;
+  rating: number;
 }
 
 // The API response structure is different from the old Movie interface.
@@ -35,6 +38,9 @@ function transformApiMovie(apiMovie: ApiMovie): Movie {
     genre: apiMovie.genres,
     poster: apiMovie.poster_path || `https://placehold.co/300x450.png`,
     posterHint: apiMovie.overview.split(' ').slice(0, 2).join(' ').toLowerCase() || 'movie poster',
+    overview: apiMovie.overview,
+    cast: apiMovie.cast,
+    rating: apiMovie.vote_average,
   };
 }
 
