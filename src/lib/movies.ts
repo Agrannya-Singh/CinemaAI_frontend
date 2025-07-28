@@ -28,8 +28,17 @@ export interface ApiMovie {
 
 const API_BASE_URL = '/api'; // Using local API proxy
 
+// Filter out offensive content
+function isOffensive(title: string): boolean {
+    const offensiveWords = ['nigger']; // Add other words if needed
+    return offensiveWords.some(word => title.toLowerCase().includes(word));
+}
+
 // Helper to transform API movie to our local Movie interface
-export function transformApiMovie(apiMovie: ApiMovie): Movie {
+export function transformApiMovie(apiMovie: ApiMovie): Movie | null {
+  if (isOffensive(apiMovie.title)) {
+    return null; // Exclude offensive movie
+  }
   return {
     id: apiMovie.id,
     imdbID: apiMovie.id,
@@ -51,7 +60,7 @@ export async function getMovies(): Promise<Movie[]> {
       throw new Error('Failed to fetch movies');
     }
     const data: ApiMovie[] = await response.json();
-    return data.map(transformApiMovie);
+    return data.map(transformApiMovie).filter((movie): movie is Movie => movie !== null);
   } catch (error) {
     console.error('Error in getMovies:', error);
     return [];
@@ -69,7 +78,7 @@ export async function searchMovies(identifier: string): Promise<Movie[]> {
       throw new Error('Failed to search movies');
     }
     const data: ApiMovie[] = await response.json();
-    return data.map(transformApiMovie);
+    return data.map(transformApiMovie).filter((movie): movie is Movie => movie !== null);
   } catch (error) {
     console.error('Error in searchMovies:', error);
     return [];
