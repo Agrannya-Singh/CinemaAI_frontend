@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -26,7 +27,16 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
     setImageError(true);
   };
   
-  const posterSrc = imageError ? 'https://placehold.co/300x450.png' : movie.poster;
+  const isValidUrl = (url: string) => {
+    try {
+      new URL(url);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+  
+  const posterSrc = imageError || !movie.poster || !isValidUrl(movie.poster) ? 'https://placehold.co/300x450.png' : movie.poster;
 
   return (
     <TooltipProvider>
