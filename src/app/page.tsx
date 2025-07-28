@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo, useCallback, useTransition } from 'react';
+import { useState, useMemo, useCallback, useTransition, useEffect } from 'react';
 import { Movie, getMovies, getGenres, getMoviesByIds, searchMovies } from '@/lib/movies';
 import { personalizeRecommendations } from '@/ai/flows/personalize-recommendations';
+import type { PersonalizeRecommendationsInput } from '@/lib/types';
 import { MovieCard } from '@/components/movie-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,21 +16,52 @@ import { Search, Film, LoaderCircle } from 'lucide-react';
 
 export default function Home() {
   const { toast } = useToast();
-  const allMovies = useMemo(() => getMovies(), []);
+  
+  const [allMovies, setAllMovies] = useState<Movie[]>([]);
+  const [moviesToDisplay, setMoviesToDisplay] = useState<Movie[]>([]);
+  const [isFetchingInitialMovies, setIsFetchingInitialMovies] = useState(true);
+
   const allGenres = useMemo(() => getGenres(), []);
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
   const [isPending, startTransition] = useTransition();
 
-  const moviesToDisplay = useMemo(() => {
-    if (!searchTerm) {
-      return allMovies;
+  useEffect(() => {
+    const fetchInitialMovies = async () => {
+      setIsFetchingInitialMovies(true);
+      const movies = await getMovies();
+      setAllMovies(movies);
+      setMoviesToDisplay(movies);
+      setIsFetchingInitialMovies(false);
+    };
+    fetchInitialMovies();
+  }, []);
+
+  const handleSearch = useCallback(async (query: string) => {
+    if (!query) {
+      setMoviesToDisplay(allMovies);
+      return;
     }
-    return searchMovies(searchTerm);
-  }, [searchTerm, allMovies]);
+    setIsSearching(true);
+    const results = await searchMovies(query);
+    // If search returns results, show them. Otherwise, keep showing the current list.
+    if(results.length > 0) {
+       setMoviesToDisplay(results);
+    }
+    setIsSearching(false);
+  }, [allMovies]);
+
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      handleSearch(searchTerm);
+    }, 500); // 500ms debounce delay
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchTerm, handleSearch]);
 
   const handleSelectMovie = useCallback((movieId: string) => {
     setSelectedMovies((prev) =>
@@ -59,11 +91,12 @@ export default function Home() {
 
     startTransition(async () => {
       try {
-        const result = await personalizeRecommendations({
+        const input: PersonalizeRecommendationsInput = {
           movieIds: selectedMovies,
           genrePreferences: selectedGenres.join(', '),
-        });
-        const recommendedMovieData = getMoviesByIds(result.personalizedRecommendations);
+        }
+        const result = await personalizeRecommendations(input);
+        const recommendedMovieData = await getMoviesByIds(result.personalizedRecommendations);
         setRecommendations(recommendedMovieData);
         document.getElementById('recommendations-section')?.scrollIntoView({ behavior: 'smooth' });
       } catch (error) {
@@ -77,10 +110,19 @@ export default function Home() {
     });
   };
 
-  const selectedMovieDetails = useMemo(
-    () => getMoviesByIds(selectedMovies),
-    [selectedMovies]
-  );
+  const [selectedMovieDetails, setSelectedMovieDetails] = useState<Movie[]>([]);
+  
+  useEffect(() => {
+    const fetchSelectedMovieDetails = async () => {
+      if (selectedMovies.length > 0) {
+        const details = await getMoviesByIds(selectedMovies);
+        setSelectedMovieDetails(details);
+      } else {
+        setSelectedMovieDetails([]);
+      }
+    };
+    fetchSelectedMovieDetails();
+  }, [selectedMovies]);
   
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -101,7 +143,9 @@ export default function Home() {
                 Search & Select Movies
               </h2>
               <div className="relative mb-6">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground">
+                  {isSearching ? <LoaderCircle className="animate-spin" /> : <Search />}
+                </div>
                 <Input
                   type="text"
                   placeholder="Search by title or IMDb ID..."
@@ -110,16 +154,22 @@ export default function Home() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-                {moviesToDisplay.map((movie) => (
-                  <MovieCard
-                    key={movie.id}
-                    movie={movie}
-                    isSelected={selectedMovies.includes(movie.id)}
-                    onSelect={handleSelectMovie}
-                  />
-                ))}
-              </div>
+              {isFetchingInitialMovies ? (
+                <div className="flex justify-center items-center h-64">
+                   <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
+                 </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {moviesToDisplay.map((movie) => (
+                    <MovieCard
+                      key={movie.id}
+                      movie={movie}
+                      isSelected={selectedMovies.includes(movie.id)}
+                      onSelect={handleSelectMovie}
+                    />
+                  ))}
+                </div>
+              )}
             </section>
 
             <section id="recommendations-section">
@@ -136,8 +186,8 @@ export default function Home() {
                     <MovieCard
                       key={movie.id}
                       movie={movie}
-                      isSelected={selectedMovies.includes(movie.id)}
-                      onSelect={handleSelectMovie}
+                      isSelected={false} // Recommendations are not selectable
+                      onSelect={() => {}} // No action on select
                     />
                   ))}
                 </div>

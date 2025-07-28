@@ -5,6 +5,7 @@ import { Movie } from '@/lib/movies';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
 
 interface MovieCardProps {
   movie: Movie;
@@ -13,6 +14,14 @@ interface MovieCardProps {
 }
 
 export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+  
+  const posterSrc = imageError ? 'https://placehold.co/300x450.png' : movie.poster;
+
   return (
     <Card
       onClick={() => onSelect(movie.id)}
@@ -24,12 +33,13 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
       <CardContent className="p-0">
         <div className="aspect-[2/3] relative">
           <Image
-            src={movie.poster}
+            src={posterSrc}
             alt={`${movie.title} poster`}
             fill
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
             className="object-cover"
             data-ai-hint={movie.posterHint}
+            onError={handleImageError}
           />
           {isSelected && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">

@@ -1,64 +1,55 @@
 'use server';
 
 /**
- * @fileOverview Personalizes movie recommendations based on user's initial selections.
+ * @fileOverview Personalizes movie recommendations based on user's initial selections
+ * by calling an external API.
  *
  * - personalizeRecommendations - A function that personalizes movie recommendations.
- * - PersonalizeRecommendationsInput - The input type for the personalizeRecommendations function.
- * - PersonalizeRecommendationsOutput - The return type for the personalizeRecommendations function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import type { ApiMovie } from '@/lib/movies';
+import type { PersonalizeRecommendationsInput, PersonalizeRecommendationsOutput } from '@/lib/types';
 
-const PersonalizeRecommendationsInputSchema = z.object({
-  movieIds: z.array(z.string()).describe('An array of movie IDs selected by the user.'),
-  genrePreferences: z.string().describe('The preferred genres of the user, as a comma separated string.'),
-});
-export type PersonalizeRecommendationsInput = z.infer<
-  typeof PersonalizeRecommendationsInputSchema
->;
+const API_BASE_URL = 'https://cinemaai-backend.onrender.com';
 
-const PersonalizeRecommendationsOutputSchema = z.object({
-  personalizedRecommendations: z
-    .array(z.string())
-    .describe('An array of personalized movie recommendations (movie IDs).'),
-});
-export type PersonalizeRecommendationsOutput = z.infer<
-  typeof PersonalizeRecommendationsOutputSchema
->;
-
+/**
+ * Fetches movie recommendations from the external FastAPI backend.
+ * @param input The user's selected movies and genre preferences.
+ * @returns A list of recommended movie IDs.
+ */
 export async function personalizeRecommendations(
   input: PersonalizeRecommendationsInput
 ): Promise<PersonalizeRecommendationsOutput> {
-  return personalizeRecommendationsFlow(input);
-}
+  // The backend API for recommendations doesn't use genre preferences,
+  // but we keep it in the function signature for potential future use.
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/recommend`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        movie_ids: input.movieIds,
+        num_recommendations: 10, // Fetch 10 recommendations
+      }),
+    });
 
-const prompt = ai.definePrompt({
-  name: 'personalizeRecommendationsPrompt',
-  input: {
-    schema: PersonalizeRecommendationsInputSchema,
-  },
-  output: {
-    schema: PersonalizeRecommendationsOutputSchema,
-  },
-  prompt: `You are a movie expert. Given a list of movie IDs that the user has selected and their genre preferences, you will return a list of personalized movie recommendations (movie IDs).
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error('Failed to fetch recommendations:', response.status, errorBody);
+      throw new Error(`Failed to fetch recommendations. Status: ${response.status}`);
+    }
 
-  User's selected movie IDs: {{{movieIds}}}
-  User's preferred genres: {{{genrePreferences}}}
+    const recommendedApiMovies: ApiMovie[] = await response.json();
+    const recommendedMovieIds = recommendedApiMovies.map((movie) => movie.id);
 
-  Return only movie IDs in the personalizedRecommendations array. Do not provide any explanation.
-  `,
-});
-
-const personalizeRecommendationsFlow = ai.defineFlow(
-  {
-    name: 'personalizeRecommendationsFlow',
-    inputSchema: PersonalizeRecommendationsInputSchema,
-    outputSchema: PersonalizeRecommendationsOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+    return {
+      personalizedRecommendations: recommendedMovieIds,
+    };
+  } catch (error) {
+    console.error('Error in personalizeRecommendations:', error);
+    // Return an empty array in case of an error to prevent crashing the client.
+    return { personalizedRecommendations: [] };
   }
-);
+}

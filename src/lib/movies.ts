@@ -1,5 +1,8 @@
+
+'use client';
+
 export interface Movie {
-  id: string;
+  id: string; // This will be the imdbID from the API
   imdbID: string;
   title: string;
   year: string;
@@ -8,207 +11,97 @@ export interface Movie {
   posterHint: string;
 }
 
-const movies: Movie[] = [
-  {
-    id: '1',
-    imdbID: 'tt0111161',
-    title: 'The Shawshank Redemption',
-    year: '1994',
-    genre: 'Drama',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'prison drama'
-  },
-  {
-    id: '2',
-    imdbID: 'tt0068646',
-    title: 'The Godfather',
-    year: '1972',
-    genre: 'Crime',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'mafia film'
-  },
-  {
-    id: '3',
-    imdbID: 'tt0468569',
-    title: 'The Dark Knight',
-    year: '2008',
-    genre: 'Action',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'superhero movie'
-  },
-  {
-    id: '4',
-    imdbID: 'tt0108052',
-    title: "Schindler's List",
-    year: '1993',
-    genre: 'Drama',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'historical film'
-  },
-  {
-    id: '5',
-    imdbID: 'tt0167260',
-    title: 'The Lord of the Rings: The Return of the King',
-    year: '2003',
-    genre: 'Fantasy',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'fantasy battle'
-  },
-  {
-    id: '6',
-    imdbID: 'tt0110912',
-    title: 'Pulp Fiction',
-    year: '1994',
-    genre: 'Crime',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'crime movie'
-  },
-  {
-    id: '7',
-    imdbID: 'tt1375666',
-    title: 'Inception',
-    year: '2010',
-    genre: 'Sci-Fi',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'sci-fi thriller'
-  },
-  {
-    id: '8',
-    imdbID: 'tt0133093',
-    title: 'The Matrix',
-    year: '1999',
-    genre: 'Sci-Fi',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'cyberpunk action'
-  },
-  {
-    id: '9',
-    imdbID: 'tt0109830',
-    title: 'Forrest Gump',
-    year: '1994',
-    genre: 'Drama',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'man on bench'
-  },
-  {
-    id: '10',
-    imdbID: 'tt0080684',
-    title: 'Star Wars: Episode V - The Empire Strikes Back',
-    year: '1980',
-    genre: 'Sci-Fi',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'space opera'
-  },
-  {
-    id: '11',
-    imdbID: 'tt0120737',
-    title: 'The Lord of the Rings: The Fellowship of the Ring',
-    year: '2001',
-    genre: 'Fantasy',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'fantasy adventure'
-  },
-  {
-    id: '12',
-    imdbID: 'tt0137523',
-    title: 'Fight Club',
-    year: '1999',
-    genre: 'Drama',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'psychological thriller'
-  },
-  {
-    id: '13',
-    imdbID: 'tt0099685',
-    title: 'Goodfellas',
-    year: '1990',
-    genre: 'Crime',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'gangster movie'
-  },
-  {
-    id: '14',
-    imdbID: 'tt0120815',
-    title: 'Saving Private Ryan',
-    year: '1998',
-    genre: 'War',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'war film'
-  },
-  {
-    id: '15',
-    imdbID: 'tt0816692',
-    title: 'Interstellar',
-    year: '2014',
-    genre: 'Sci-Fi',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'space exploration'
-  },
-    {
-    id: '16',
-    imdbID: 'tt0114369',
-    title: 'Se7en',
-    year: '1995',
-    genre: 'Thriller',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'crime thriller'
-  },
-  {
-    id: '17',
-    imdbID: 'tt0102926',
-    title: 'The Silence of the Lambs',
-    year: '1991',
-    genre: 'Thriller',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'psychological horror'
-  },
-  {
-    id: '18',
-    imdbID: 'tt6751668',
-    title: 'Parasite',
-    year: '2019',
-    genre: 'Thriller',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'social thriller'
-  },
-  {
-    id: '19',
-    imdbID: 'tt0110413',
-    title: 'Léon: The Professional',
-    year: '1994',
-    genre: 'Action',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'hitman drama'
-  },
-  {
-    id: '20',
-    imdbID: 'tt0120689',
-    title: 'The Green Mile',
-    year: '1999',
-    genre: 'Fantasy',
-    poster: 'https://placehold.co/300x450.png',
-    posterHint: 'fantasy drama'
-  },
-];
-
-export function getMovies(): Movie[] {
-  return movies;
+// The API response structure is different from the old Movie interface.
+// Let's define a type for the API response.
+export interface ApiMovie {
+  id: string; // imdbID
+  title: string;
+  overview: string;
+  genres: string; // Comma-separated
+  cast: string;
+  poster_path: string;
+  vote_average: number;
+  release_date: string; // Year
 }
 
-export function searchMovies(identifier: string): Movie[] {
-  const lowerCaseIdentifier = identifier.toLowerCase();
-  return movies.filter(
-    (movie) =>
-      movie.title.toLowerCase().includes(lowerCaseIdentifier) ||
-      movie.imdbID.toLowerCase().includes(lowerCaseIdentifier)
-  );
+const API_BASE_URL = 'https://cinemaai-backend.onrender.com';
+
+// Helper to transform API movie to our local Movie interface
+function transformApiMovie(apiMovie: ApiMovie): Movie {
+  return {
+    id: apiMovie.id,
+    imdbID: apiMovie.id,
+    title: apiMovie.title,
+    year: apiMovie.release_date,
+    genre: apiMovie.genres,
+    poster: apiMovie.poster_path || `https://placehold.co/300x450.png`,
+    posterHint: apiMovie.overview.split(' ').slice(0, 2).join(' ').toLowerCase() || 'movie poster',
+  };
 }
 
-export function getMoviesByIds(ids: string[]): Movie[] {
-  return movies.filter((movie) => ids.includes(movie.id));
+
+export async function getMovies(): Promise<Movie[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/movies`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch movies');
+    }
+    const data: ApiMovie[] = await response.json();
+    return data.map(transformApiMovie);
+  } catch (error) {
+    console.error('Error in getMovies:', error);
+    return [];
+  }
 }
+
+export async function searchMovies(identifier: string): Promise<Movie[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/search/${identifier}`);
+    if (!response.ok) {
+      // It's ok if not found, just return empty
+      if (response.status === 404) {
+        return [];
+      }
+      throw new Error('Failed to search movies');
+    }
+    const data: ApiMovie[] = await response.json();
+    return data.map(transformApiMovie);
+  } catch (error) {
+    console.error('Error in searchMovies:', error);
+    return [];
+  }
+}
+
+// We need a way to get movie details for the selected movies.
+// The API doesn't have a getByIds endpoint, so we will fetch them one by one.
+// This is not ideal for performance, but it's what the API allows.
+export async function getMoviesByIds(ids: string[]): Promise<Movie[]> {
+   if (ids.length === 0) {
+    return [];
+  }
+  // This is a bit inefficient. A better API would have a /movies?ids=... endpoint.
+  // For now, we search for each movie by its ID.
+  const moviePromises = ids.map(id => searchMovies(id));
+  const moviesArrays = await Promise.all(moviePromises);
+  // Flatten the array of arrays and remove duplicates
+  const moviesMap = new Map<string, Movie>();
+  moviesArrays.flat().forEach(movie => moviesMap.set(movie.id, movie));
+  return Array.from(moviesMap.values());
+}
+
 
 export function getGenres(): string[] {
-    const genres = new Set(movies.map(movie => movie.genre));
-    return Array.from(genres).sort();
+    // This will be static for now, as the API doesn't provide a genre list endpoint.
+    // We can derive it from the initial movie list, but that list is now async.
+    // For simplicity, we'll keep the static list.
+    return [
+      "Action",
+      "Adventure",
+      "Crime",
+      "Drama",
+      "Fantasy",
+      "Sci-Fi",
+      "Thriller",
+      "War"
+    ].sort();
 }
