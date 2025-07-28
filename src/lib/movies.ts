@@ -30,7 +30,7 @@ const API_BASE_URL = '/api'; // Using local API proxy
 
 // Helper to transform API movie to our local Movie interface
 export function transformApiMovie(apiMovie: ApiMovie): Movie | null {
-  return {
+    return {
     id: apiMovie.id,
     imdbID: apiMovie.id,
     title: apiMovie.title,
