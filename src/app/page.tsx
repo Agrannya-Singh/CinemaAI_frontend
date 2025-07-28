@@ -106,7 +106,8 @@ export default function Home() {
         const recommendedApiMovies: ApiMovie[] = await response.json();
         const recommendedMovieData = recommendedApiMovies
           .map(transformApiMovie)
-          .filter((movie): movie is Movie => movie !== null);
+          .filter((movie): movie is Movie => movie !== null)
+          .filter(movie => !selectedMovies.includes(movie.id));
 
 
         setRecommendations(recommendedMovieData);
@@ -149,8 +150,8 @@ export default function Home() {
 
       <main className="flex-1 container mx-auto p-4 sm:p-6 lg:p-8 space-y-12">
         <section>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            <div className="lg:col-span-1 lg:sticky top-20">
+          <div className="grid grid-cols-1 gap-8 items-start">
+            <div>
               <h2 className="text-2xl font-headline font-semibold mb-4 text-primary">
                   Search &amp; Select
               </h2>
@@ -173,7 +174,7 @@ export default function Home() {
                   <CardContent className="space-y-6">
                       <div>
                           <h3 className="font-semibold mb-3">1. Pick Your Genres</h3>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                               {allGenres.map((genre) => (
                               <div key={genre} className="flex items-center space-x-2">
                                   <Checkbox
@@ -217,7 +218,7 @@ export default function Home() {
                   </CardContent>
               </Card>
             </div>
-            <div className='lg:col-span-2'>
+            <div>
               <h2 className="text-2xl font-headline font-semibold mb-4 text-primary">
                   {searchTerm ? 'Search Results' : 'Available Movies'}
               </h2>
@@ -227,7 +228,7 @@ export default function Home() {
                 </div>
               ) : (
                 moviesToDisplay.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                     {moviesToDisplay.map((movie) => (
                       <MovieCard
                         key={movie.id}
@@ -281,4 +282,5 @@ export default function Home() {
       </main>
     </div>
   );
-}
+
+    
