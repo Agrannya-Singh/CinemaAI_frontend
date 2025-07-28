@@ -69,11 +69,15 @@ export default function Home() {
   }, []);
 
   const handleSelectGenre = (genre: string) => {
-    setSelectedGenres((prev) =>
-      prev.includes(genre)
-        ? prev.filter((g) => g !== genre)
-        : [...prev, genre]
-    );
+    setSelectedGenres((prev) => {
+        if (genre === 'Any') {
+            return prev.includes('Any') ? [] : ['Any'];
+        }
+        const newSelection = prev.filter(g => g !== 'Any');
+        return newSelection.includes(genre)
+            ? newSelection.filter(g => g !== genre)
+            : [...newSelection, genre];
+    });
   };
   
   const handleGetRecommendations = async () => {
@@ -218,7 +222,10 @@ export default function Home() {
                   </CardContent>
               </Card>
             </div>
-            <div>
+          </div>
+        </section>
+        
+        <section>
               <h2 className="text-2xl font-headline font-semibold mb-4 text-primary">
                   {searchTerm ? 'Search Results' : 'Available Movies'}
               </h2>
@@ -247,8 +254,6 @@ export default function Home() {
                   </Card>
                 )
               )}
-            </div>
-          </div>
         </section>
         
         <section id="recommendations-section">
@@ -282,5 +287,4 @@ export default function Home() {
       </main>
     </div>
   );
-
-    
+}

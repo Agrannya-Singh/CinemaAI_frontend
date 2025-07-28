@@ -28,17 +28,8 @@ export interface ApiMovie {
 
 const API_BASE_URL = '/api'; // Using local API proxy
 
-// Filter out offensive content
-function isOffensive(title: string): boolean {
-    const offensiveWords = ['nigger']; // Add other words if needed
-    return offensiveWords.some(word => title.toLowerCase().includes(word));
-}
-
 // Helper to transform API movie to our local Movie interface
 export function transformApiMovie(apiMovie: ApiMovie): Movie | null {
-  if (isOffensive(apiMovie.title)) {
-    return null; // Exclude offensive movie
-  }
   return {
     id: apiMovie.id,
     imdbID: apiMovie.id,
@@ -107,6 +98,7 @@ export function getGenres(): string[] {
   // We can derive it from the initial movie list, but that list is now async.
   // For simplicity, we'll keep the static list.
   return [
+    "Any",
     "Action",
     "Adventure",
     "Crime",
