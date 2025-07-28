@@ -48,10 +48,7 @@ export default function Home() {
     }
     setIsSearching(true);
     const results = await searchMovies(query);
-    // If search returns results, show them. Otherwise, keep showing the current list.
-    if(results.length > 0) {
-       setMoviesToDisplay(results);
-    }
+    setMoviesToDisplay(results); // Always show search results, even if empty, to indicate the search was performed.
     setIsSearching(false);
   }, [allMovies]);
 
@@ -220,23 +217,32 @@ export default function Home() {
                   </div>
                   <div className='lg:col-span-2'>
                     <h3 className="text-xl font-headline font-semibold mb-4 text-primary/80">
-                        Available Movies
+                        {searchTerm ? 'Search Results' : 'Available Movies'}
                     </h3>
                     {isFetchingInitialMovies ? (
                       <div className="flex justify-center items-center h-64">
                         <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
                       </div>
                     ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                        {moviesToDisplay.map((movie) => (
-                          <MovieCard
-                            key={movie.id}
-                            movie={movie}
-                            isSelected={selectedMovies.includes(movie.id)}
-                            onSelect={handleSelectMovie}
-                          />
-                        ))}
-                      </div>
+                      moviesToDisplay.length > 0 ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                          {moviesToDisplay.map((movie) => (
+                            <MovieCard
+                              key={movie.id}
+                              movie={movie}
+                              isSelected={selectedMovies.includes(movie.id)}
+                              onSelect={handleSelectMovie}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <Card className="flex flex-col items-center justify-center text-center p-8 h-64 bg-background border-primary/20">
+                          <Film className="h-12 w-12 text-muted-foreground mb-4" />
+                          <p className="text-muted-foreground">
+                            {searchTerm ? 'No movies found for your search.' : 'No movies available.'}
+                          </p>
+                        </Card>
+                      )
                     )}
                   </div>
                 </div>
