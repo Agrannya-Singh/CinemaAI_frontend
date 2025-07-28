@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback, useTransition, useEffect } from 'react';
-import { Movie, getMovies, getGenres, getMoviesByIds, searchMovies } from '@/lib/movies';
+import { Movie, getMovies, getGenres, getMoviesByIds, searchMovies, transformApiMovie } from '@/lib/movies';
 import { MovieCard } from '@/components/movie-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -106,7 +106,7 @@ export default function Home() {
         }
 
         const recommendedApiMovies: ApiMovie[] = await response.json();
-         const recommendedMovieData = await getMoviesByIds(recommendedApiMovies.map(m => m.id));
+        const recommendedMovieData = recommendedApiMovies.map(transformApiMovie);
 
         setRecommendations(recommendedMovieData);
         document.getElementById('recommendations-section')?.scrollIntoView({ behavior: 'smooth' });
