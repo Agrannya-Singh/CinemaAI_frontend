@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Film, LoaderCircle } from 'lucide-react';
+import { Search, Film, LoaderCircle, Download } from 'lucide-react';
 import type { ApiMovie } from '@/lib/movies';
 
 export default function Home() {
@@ -157,6 +157,28 @@ export default function Home() {
     };
     fetchSelectedMovieDetails();
   }, [selectedMovies]);
+
+  const handleDownloadRecommendations = () => {
+    if (recommendations.length === 0) {
+      toast({
+        title: 'No Recommendations',
+        description: 'There are no recommendations to download.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const jsonString = JSON.stringify(recommendations, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'movie_recommendations.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
   
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -274,9 +296,17 @@ export default function Home() {
         </section>
         
         <section id="recommendations-section">
-            <h2 className="text-2xl font-headline font-semibold mb-4 text-primary">
-                Your AI Recommendations
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-headline font-semibold text-primary">
+                  Your AI Recommendations
+              </h2>
+              {recommendations.length > 0 && (
+                <Button onClick={handleDownloadRecommendations} variant="outline" size="sm">
+                  <Download className="mr-2 h-4 w-4" />
+                  Download JSON
+                </Button>
+              )}
+            </div>
             {isPending ? (
                 <div className="flex justify-center items-center h-64">
                 <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
