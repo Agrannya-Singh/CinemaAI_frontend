@@ -1,4 +1,3 @@
-
 'use client';
 
 export interface Movie {
@@ -24,7 +23,7 @@ export interface ApiMovie {
   release_date: string; // Year
 }
 
-const API_BASE_URL = 'https://cinemaai-backend.onrender.com';
+const API_BASE_URL = '/api'; // Using local API proxy
 
 // Helper to transform API movie to our local Movie interface
 function transformApiMovie(apiMovie: ApiMovie): Movie {
@@ -38,7 +37,6 @@ function transformApiMovie(apiMovie: ApiMovie): Movie {
     posterHint: apiMovie.overview.split(' ').slice(0, 2).join(' ').toLowerCase() || 'movie poster',
   };
 }
-
 
 export async function getMovies(): Promise<Movie[]> {
   try {
@@ -76,7 +74,7 @@ export async function searchMovies(identifier: string): Promise<Movie[]> {
 // The API doesn't have a getByIds endpoint, so we will fetch them one by one.
 // This is not ideal for performance, but it's what the API allows.
 export async function getMoviesByIds(ids: string[]): Promise<Movie[]> {
-   if (ids.length === 0) {
+  if (ids.length === 0) {
     return [];
   }
   // This is a bit inefficient. A better API would have a /movies?ids=... endpoint.
@@ -89,19 +87,18 @@ export async function getMoviesByIds(ids: string[]): Promise<Movie[]> {
   return Array.from(moviesMap.values());
 }
 
-
 export function getGenres(): string[] {
-    // This will be static for now, as the API doesn't provide a genre list endpoint.
-    // We can derive it from the initial movie list, but that list is now async.
-    // For simplicity, we'll keep the static list.
-    return [
-      "Action",
-      "Adventure",
-      "Crime",
-      "Drama",
-      "Fantasy",
-      "Sci-Fi",
-      "Thriller",
-      "War"
-    ].sort();
+  // This will be static for now, as the API doesn't provide a genre list endpoint.
+  // We can derive it from the initial movie list, but that list is now async.
+  // For simplicity, we'll keep the static list.
+  return [
+    "Action",
+    "Adventure",
+    "Crime",
+    "Drama",
+    "Fantasy",
+    "Sci-Fi",
+    "Thriller",
+    "War"
+  ].sort();
 }

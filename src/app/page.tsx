@@ -2,8 +2,6 @@
 
 import { useState, useMemo, useCallback, useTransition, useEffect } from 'react';
 import { Movie, getMovies, getGenres, getMoviesByIds, searchMovies } from '@/lib/movies';
-import { personalizeRecommendations } from '@/ai/flows/personalize-recommendations';
-import type { PersonalizeRecommendationsInput } from '@/lib/types';
 import { MovieCard } from '@/components/movie-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Film, LoaderCircle } from 'lucide-react';
+import type { ApiMovie } from '@/lib/movies';
 
 export default function Home() {
   const { toast } = useToast();
@@ -91,12 +90,24 @@ export default function Home() {
 
     startTransition(async () => {
       try {
-        const input: PersonalizeRecommendationsInput = {
-          movieIds: selectedMovies,
-          genrePreferences: selectedGenres.join(', '),
+        const response = await fetch('/api/recommend', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            movie_ids: selectedMovies,
+            num_recommendations: 10,
+          }),
+        });
+
+        if (!response.ok) {
+           throw new Error('Failed to fetch recommendations');
         }
-        const result = await personalizeRecommendations(input);
-        const recommendedMovieData = await getMoviesByIds(result.personalizedRecommendations);
+
+        const recommendedApiMovies: ApiMovie[] = await response.json();
+         const recommendedMovieData = await getMoviesByIds(recommendedApiMovies.map(m => m.id));
+
         setRecommendations(recommendedMovieData);
         document.getElementById('recommendations-section')?.scrollIntoView({ behavior: 'smooth' });
       } catch (error) {
