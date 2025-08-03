@@ -56,26 +56,46 @@ export default function Home() {
     
     setIsSearching(true);
     try {
-        await searchMovies(trimmedQuery);
-        // After a successful search, the backend adds the movie.
-        // Re-fetch all movies to get the updated list.
-        await fetchAllMovies();
+        const results = await searchMovies(trimmedQuery);
+        if (results.length > 0) {
+            // New movie found, refetch all to get the updated list
+            await fetchAllMovies();
+            const lowercasedQuery = trimmedQuery.toLowerCase();
+            // This is a bit of a hack. After fetching all, we need to find the movie we just searched for.
+            // The `searchMovies` function calls our backend which adds it to the DB.
+            // Then `fetchAllMovies` gets it. Then we filter for it.
+            // This could be improved if the search API returned the movie and we could add it to state.
+            setTimeout(() => {
+                const justAdded = allMovies.filter(movie => 
+                    movie.title.toLowerCase().includes(lowercasedQuery) || 
+                    movie.id.toLowerCase() === lowercasedQuery
+                );
+                setMoviesToDisplay(justAdded.length > 0 ? justAdded : results);
+            }, 100);
+
+        } else {
+             const lowercasedQuery = trimmedQuery.toLowerCase();
+             const localResults = allMovies.filter(movie => 
+                movie.title.toLowerCase().includes(lowercasedQuery) || 
+                movie.id.toLowerCase() === lowercasedQuery
+             );
+             setMoviesToDisplay(localResults);
+             if(localResults.length === 0) {
+                toast({
+                    title: 'Search Result',
+                    description: 'Movie not found in our database or OMDb.',
+                });
+             }
+        }
 
     } catch (error) {
         console.error("Search failed:", error);
         toast({
             title: 'Search Error',
-            description: 'Could not perform search. The movie may not be in the database.',
+            description: 'Could not perform search. Please try again.',
             variant: 'destructive',
         });
     } finally {
-         // After searching (and re-fetching), filter to show just the searched movie
-        const lowercasedQuery = trimmedQuery.toLowerCase();
-        const results = allMovies.filter(movie => 
-            movie.title.toLowerCase().includes(lowercasedQuery) || 
-            movie.id.toLowerCase() === lowercasedQuery
-        );
-        setMoviesToDisplay(results);
         setIsSearching(false);
     }
   }, [allMovies, toast, fetchAllMovies]);
