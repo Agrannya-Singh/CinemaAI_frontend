@@ -26,6 +26,22 @@ export interface ApiMovie {
   release_date: string; // Year
 }
 
+// Type for OMDb API response
+interface OMDbMovie {
+    Title: string;
+    Year: string;
+    imdbID: string;
+    Type: string;
+    Poster: string;
+    Genre?: string;
+    Plot?: string;
+    Actors?: string;
+    imdbRating?: string;
+    Response: "True" | "False";
+    Error?: string;
+}
+
+
 const API_BASE_URL = '/api'; // Using local API proxy
 
 // Helper to transform API movie to our local Movie interface
@@ -44,6 +60,23 @@ export function transformApiMovie(apiMovie: ApiMovie): Movie | null {
   };
 }
 
+function transformOMDbMovie(omdbMovie: OMDbMovie): Movie | null {
+    if (omdbMovie.Response !== "True") return null;
+    return {
+        id: omdbMovie.imdbID,
+        imdbID: omdbMovie.imdbID,
+        title: omdbMovie.Title,
+        year: omdbMovie.Year,
+        genre: omdbMovie.Genre || 'N/A',
+        poster: omdbMovie.Poster !== 'N/A' ? omdbMovie.Poster : `https://placehold.co/300x450.png`,
+        posterHint: omdbMovie.Plot?.split(' ').slice(0, 2).join(' ').toLowerCase() || 'movie poster',
+        overview: omdbMovie.Plot || 'No overview available.',
+        cast: omdbMovie.Actors || 'N/A',
+        rating: omdbMovie.imdbRating ? parseFloat(omdbMovie.imdbRating) : 0,
+    };
+}
+
+
 export async function getMovies(): Promise<Movie[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/movies`);
@@ -60,54 +93,58 @@ export async function getMovies(): Promise<Movie[]> {
 
 export async function searchMovies(identifier: string): Promise<Movie[]> {
   try {
+    // First, try searching via our backend
     const response = await fetch(`${API_BASE_URL}/search/${identifier}`);
-    if (!response.ok) {
-      // It's ok if not found, just return empty
-      if (response.status === 404) {
-        return [];
+    if (response.ok) {
+      const data: ApiMovie[] = await response.json();
+       if (data.length > 0) {
+        return data.map(transformApiMovie).filter((movie): movie is Movie => movie !== null);
       }
-      throw new Error('Failed to search movies');
     }
-    const data: ApiMovie[] = await response.json();
-    return data.map(transformApiMovie).filter((movie): movie is Movie => movie !== null);
+    
+    // If backend search fails or returns no results, try OMDb directly as a fallback
+    console.log('Backend search failed or empty, trying OMDb API fallback.');
+    const omdbApiKey = process.env.NEXT_PUBLIC_OMDB_API_KEY;
+    if (!omdbApiKey) {
+        console.error('OMDb API key is not configured.');
+        return [];
+    }
+
+    const omdbUrl = `http://www.omdbapi.com/?t=${encodeURIComponent(identifier)}&apikey=${omdbApiKey}`;
+    const omdbResponse = await fetch(omdbUrl);
+    
+    if (!omdbResponse.ok) {
+        throw new Error('Failed to fetch from OMDb API.');
+    }
+
+    const omdbData: OMDbMovie = await omdbResponse.json();
+
+    if (omdbData.Response === "True") {
+        const movie = transformOMDbMovie(omdbData);
+        // We can't add to our backend from here, but we can return it to the UI for display
+        return movie ? [movie] : [];
+    } else {
+        console.log('Movie not found in OMDb.');
+        return [];
+    }
   } catch (error) {
     console.error('Error in searchMovies:', error);
     return [];
   }
 }
 
+
 // We need a way to get movie details for the selected movies.
-// The API doesn't have a getByIds endpoint, so we will fetch them one by one.
-// This is not ideal for performance, but it's what the API allows.
-export async function getMoviesByIds(ids: string[]): Promise<Movie[]> {
+// The API doesn't have a getByIds endpoint, so we will filter the main list.
+export async function getMoviesByIds(ids: string[], allMovies: Movie[]): Promise<Movie[]> {
   if (ids.length === 0) {
     return [];
   }
-  // Instead of searching, we'll get all movies and filter.
-  // This is more robust if the search function has side-effects or is rate-limited.
   try {
-    const allMovies = await getMovies();
     const selected = allMovies.filter(movie => ids.includes(movie.id));
     return selected;
   } catch (error) {
     console.error('Error in getMoviesByIds:', error);
     return [];
   }
-}
-
-export function getGenres(): string[] {
-  // This will be static for now, as the API doesn't provide a genre list endpoint.
-  // We can derive it from the initial movie list, but that list is now async.
-  // For simplicity, we'll keep the static list.
-  return [
-    "Any",
-    "Action",
-    "Adventure",
-    "Crime",
-    "Drama",
-    "Fantasy",
-    "Sci-Fi",
-    "Thriller",
-    "War"
-  ].sort();
 }
