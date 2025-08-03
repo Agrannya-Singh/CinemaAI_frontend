@@ -2,12 +2,10 @@
 'use client';
 
 import { useState, useMemo, useCallback, useTransition, useEffect } from 'react';
-import { Movie, getMovies, getGenres, getMoviesByIds, searchMovies, transformApiMovie } from '@/lib/movies';
+import { Movie, getMovies, getMoviesByIds, searchMovies, transformApiMovie } from '@/lib/movies';
 import { MovieCard } from '@/components/movie-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
@@ -21,12 +19,9 @@ export default function Home() {
   const [moviesToDisplay, setMoviesToDisplay] = useState<Movie[]>([]);
   const [isFetchingInitialMovies, setIsFetchingInitialMovies] = useState(true);
 
-  const allGenres = useMemo(() => getGenres(), []);
-
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>(['Any']);
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
   const [isPending, startTransition] = useTransition();
 
@@ -62,31 +57,24 @@ export default function Home() {
     setIsSearching(true);
     try {
         const searchResult = await searchMovies(trimmedQuery);
-        if (searchResult.length > 0) {
-            // New movie found and added to DB, refresh the whole list
-            await fetchAllMovies();
-            // Then filter to show just the searched movie
-            const lowercasedQuery = trimmedQuery.toLowerCase();
-            const results = (await getMovies()).filter(movie => 
-                movie.title.toLowerCase().includes(lowercasedQuery) || 
-                movie.id.toLowerCase() === lowercasedQuery
-            );
-            setMoviesToDisplay(results);
-        } else {
-            // If search API returns nothing, filter client-side
-            const lowercasedQuery = trimmedQuery.toLowerCase();
-            const results = allMovies.filter(movie => 
-                movie.title.toLowerCase().includes(lowercasedQuery) || 
-                movie.id.toLowerCase() === lowercasedQuery
-            );
-            setMoviesToDisplay(results);
-             if (results.length === 0) {
-                toast({
-                    title: 'Not Found',
-                    description: 'That movie could not be found.',
-                    variant: 'default',
-                });
-            }
+        // After a successful search, the backend adds the movie.
+        // Re-fetch all movies to get the updated list.
+        await fetchAllMovies();
+
+        // Then filter to show just the searched movie
+        const lowercasedQuery = trimmedQuery.toLowerCase();
+        const results = (await getMovies()).filter(movie => 
+            movie.title.toLowerCase().includes(lowercasedQuery) || 
+            movie.id.toLowerCase() === lowercasedQuery
+        );
+        setMoviesToDisplay(results);
+        
+        if (results.length === 0 && searchResult.length === 0) {
+            toast({
+                title: 'Not Found',
+                description: 'That movie could not be found.',
+                variant: 'default',
+            });
         }
     } catch (error) {
         console.error("Search failed:", error);
@@ -104,8 +92,9 @@ export default function Home() {
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
-        if(searchTerm) {
-           handleSearch(searchTerm);
+        const trimmedSearchTerm = searchTerm.trim();
+        if(trimmedSearchTerm.length >= 3) {
+           handleSearch(trimmedSearchTerm);
         } else {
             setMoviesToDisplay(allMovies);
         }
@@ -121,24 +110,12 @@ export default function Home() {
         : [...prev, movieId]
     );
   }, []);
-
-  const handleSelectGenre = (genre: string) => {
-    setSelectedGenres((prev) => {
-        if (genre === 'Any') {
-            return prev.includes('Any') ? [] : ['Any'];
-        }
-        const newSelection = prev.filter(g => g !== 'Any');
-        return newSelection.includes(genre)
-            ? newSelection.filter(g => g !== genre)
-            : [...newSelection, genre];
-    });
-  };
   
   const handleGetRecommendations = async () => {
-    if (selectedMovies.length === 0 || selectedGenres.length === 0) {
+    if (selectedMovies.length === 0) {
       toast({
         title: 'Selection Incomplete',
-        description: 'Please select at least one movie and one genre to get recommendations.',
+        description: 'Please select at least one movie to get recommendations.',
         variant: 'destructive',
       });
       return;
@@ -253,26 +230,7 @@ export default function Home() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                       <div>
-                          <h3 className="font-semibold mb-3">1. Pick Your Genres</h3>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                              {allGenres.map((genre) => (
-                              <div key={genre} className="flex items-center space-x-2">
-                                  <Checkbox
-                                  id={genre}
-                                  onCheckedChange={() => handleSelectGenre(genre)}
-                                  checked={selectedGenres.includes(genre)}
-                                  className="border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                                  />
-                                  <Label htmlFor={genre} className="text-sm font-normal cursor-pointer">
-                                  {genre}
-                                  </Label>
-                              </div>
-                              ))}
-                          </div>
-                      </div>
-
-                      <div>
-                          <h3 className="font-semibold mb-3">2. Your Selected Movies ({selectedMovies.length})</h3>
+                          <h3 className="font-semibold mb-3">Your Selected Movies ({selectedMovies.length})</h3>
                           <ScrollArea className="h-40 rounded-md border border-primary/20 p-2">
                               {selectedMovieDetails.length > 0 ? (
                               <ul className="space-y-1">
@@ -290,7 +248,7 @@ export default function Home() {
                       size="lg" 
                       className="w-full font-bold bg-primary hover:bg-primary/90 text-primary-foreground"
                       onClick={handleGetRecommendations}
-                      disabled={isPending || selectedMovies.length === 0 || selectedGenres.length === 0}
+                      disabled={isPending || selectedMovies.length === 0}
                       >
                       {isPending && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
                       Generate Recommendations

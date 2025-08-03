@@ -90,20 +90,3 @@ export async function getMoviesByIds(ids: string[], allMovies: Movie[]): Promise
     return [];
   }
 }
-
-export function getGenres(): string[] {
-  // This will be static for now, as the API doesn't provide a genre list endpoint.
-  // We can derive it from the initial movie list, but that list is now async.
-  // For simplicity, we'll keep the static list.
-  return [
-    "Any",
-    "Action",
-    "Adventure",
-    "Crime",
-    "Drama",
-    "Fantasy",
-    "Sci-Fi",
-    "Thriller",
-    "War"
-  ].sort();
-}
