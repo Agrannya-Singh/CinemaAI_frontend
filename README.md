@@ -89,3 +89,45 @@ The frontend application interacts with a backend API through a proxy set up wit
   - `movie_ids` (array of strings): A list of IMDb IDs for the movies the user has selected.
   - `num_recommendations` (integer): The desired number of recommendations.
 - **Response Body:** An array of recommended movie objects, with the same structure as in the `/movies` endpoint response.
+
+<!-- This is an auto-generated comment: summarize by coderabbit.ai -->
+<!-- walkthrough_start -->
+
+## Walkthrough OF Version 2 Chnages 
+
+This update introduces a sample environment file, refines the `.gitignore` for environment and package manager files, and adds a `postinstall` script to `package.json`. The UI and styling are overhauled: font loading uses Next.js's font API, color variables and radii are updated, and genre selection is removed from the movie selection flow. Movie search now includes an OMDb API fallback, and the `MovieCard` component is visually revamped with enhanced hover and selection effects. Tailwind's font configuration is streamlined to use a CSS variable.
+
+## Changes
+
+| Cohort / File(s) | Change Summary |
+|------------------|---------------|
+| **Environment and Ignore Files**<br>`.env.sample`, `.gitignore` | Added a sample environment file with instructions and a placeholder API key. Updated `.gitignore` to better handle environment files and package manager artifacts, removing and refining several patterns. |
+| **Package Scripts**<br>`package.json` | Added a `postinstall` script to run `patch-package` after installs. Minor formatting update. |
+| **Global Styling and Fonts**<br>`src/app/globals.css`, `tailwind.config.ts`, `src/app/layout.tsx` | Updated color palette, border radius, and removed sidebar variables in CSS. Switched font loading to Next.js's font API and streamlined Tailwind's font config to use a variable. |
+| **Movie Selection & Search Flow**<br>`src/app/page.tsx`, `src/lib/movies.ts` | Refactored movie fetching and search to use an OMDb API fallback, removed genre selection, improved error handling, and updated UI/UX for movie selection and recommendations. Adjusted `getMoviesByIds` to accept pre-fetched movies. |
+| **Movie Card UI**<br>`src/components/movie-card.tsx` | Overhauled card visuals: removed tooltips, added new hover/selection overlays, updated layout, and improved image and overlay effects. |
+
+## Sequence Diagram(s)
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant HomePage (page.tsx)
+    participant MoviesLib (lib/movies.ts)
+    participant BackendAPI
+    participant OMDbAPI
+
+    User->>HomePage: Search for movie (input)
+    HomePage->>MoviesLib: searchMovies(query)
+    MoviesLib->>BackendAPI: Search movies (query)
+    BackendAPI-->>MoviesLib: Results (may be empty)
+    alt If backend returns results
+        MoviesLib-->>HomePage: Return results
+    else If backend returns empty
+        MoviesLib->>OMDbAPI: Query by title (OMDb API)
+        OMDbAPI-->>MoviesLib: OMDb movie or error
+        MoviesLib-->>HomePage: Return OMDb result or empty
+    end
+    HomePage-->>User: Display search results or toast
+```
+
