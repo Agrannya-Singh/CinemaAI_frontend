@@ -30,16 +30,27 @@ export default function Home() {
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
   const [isPending, startTransition] = useTransition();
 
+  const fetchAllMovies = useCallback(async () => {
+    setIsFetchingInitialMovies(true);
+    try {
+        const movies = await getMovies();
+        setAllMovies(movies);
+        setMoviesToDisplay(movies);
+    } catch (error) {
+        console.error("Failed to fetch movies:", error);
+        toast({
+            title: 'Error',
+            description: 'Could not fetch movies. Please try refreshing the page.',
+            variant: 'destructive',
+        });
+    } finally {
+        setIsFetchingInitialMovies(false);
+    }
+  }, [toast]);
+
   useEffect(() => {
-    const fetchInitialMovies = async () => {
-      setIsFetchingInitialMovies(true);
-      const movies = await getMovies();
-      setAllMovies(movies);
-      setMoviesToDisplay(movies);
-      setIsFetchingInitialMovies(false);
-    };
-    fetchInitialMovies();
-  }, []);
+    fetchAllMovies();
+  }, [fetchAllMovies]);
 
   const handleSearch = useCallback(async (query: string) => {
     const trimmedQuery = query.trim();
@@ -47,35 +58,61 @@ export default function Home() {
         setMoviesToDisplay(allMovies);
         return;
     }
+    
     setIsSearching(true);
     try {
-        // Client-side search for case-insensitivity
-        const lowercasedQuery = trimmedQuery.toLowerCase();
-        const results = allMovies.filter(movie => 
-            movie.title.toLowerCase().includes(lowercasedQuery) || 
-            movie.id.toLowerCase() === lowercasedQuery
-        );
-        setMoviesToDisplay(results);
+        const searchResult = await searchMovies(trimmedQuery);
+        if (searchResult.length > 0) {
+            // New movie found and added to DB, refresh the whole list
+            await fetchAllMovies();
+            // Then filter to show just the searched movie
+            const lowercasedQuery = trimmedQuery.toLowerCase();
+            const results = (await getMovies()).filter(movie => 
+                movie.title.toLowerCase().includes(lowercasedQuery) || 
+                movie.id.toLowerCase() === lowercasedQuery
+            );
+            setMoviesToDisplay(results);
+        } else {
+            // If search API returns nothing, filter client-side
+            const lowercasedQuery = trimmedQuery.toLowerCase();
+            const results = allMovies.filter(movie => 
+                movie.title.toLowerCase().includes(lowercasedQuery) || 
+                movie.id.toLowerCase() === lowercasedQuery
+            );
+            setMoviesToDisplay(results);
+             if (results.length === 0) {
+                toast({
+                    title: 'Not Found',
+                    description: 'That movie could not be found.',
+                    variant: 'default',
+                });
+            }
+        }
     } catch (error) {
         console.error("Search failed:", error);
         toast({
             title: 'Search Error',
-            description: 'Could not perform search. Please try again.',
+            description: 'Could not perform search. The movie may not be in the database.',
             variant: 'destructive',
         });
         setMoviesToDisplay(allMovies);
     } finally {
         setIsSearching(false);
     }
-  }, [allMovies, toast]);
+  }, [allMovies, toast, fetchAllMovies]);
+
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
-      handleSearch(searchTerm);
+        if(searchTerm) {
+           handleSearch(searchTerm);
+        } else {
+            setMoviesToDisplay(allMovies);
+        }
     }, 500); // 500ms debounce delay
 
     return () => clearTimeout(debounceTimer);
-  }, [searchTerm, handleSearch]);
+  }, [searchTerm, handleSearch, allMovies]);
 
   const handleSelectMovie = useCallback((movieId: string) => {
     setSelectedMovies((prev) =>
@@ -149,14 +186,14 @@ export default function Home() {
   useEffect(() => {
     const fetchSelectedMovieDetails = async () => {
       if (selectedMovies.length > 0) {
-        const details = await getMoviesByIds(selectedMovies);
+        const details = await getMoviesByIds(selectedMovies, allMovies);
         setSelectedMovieDetails(details);
       } else {
         setSelectedMovieDetails([]);
       }
     };
     fetchSelectedMovieDetails();
-  }, [selectedMovies]);
+  }, [selectedMovies, allMovies]);
 
   const handleDownloadRecommendations = () => {
     if (recommendations.length === 0) {

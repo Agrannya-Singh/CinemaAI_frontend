@@ -77,16 +77,12 @@ export async function searchMovies(identifier: string): Promise<Movie[]> {
 }
 
 // We need a way to get movie details for the selected movies.
-// The API doesn't have a getByIds endpoint, so we will fetch them one by one.
-// This is not ideal for performance, but it's what the API allows.
-export async function getMoviesByIds(ids: string[]): Promise<Movie[]> {
+// The API doesn't have a getByIds endpoint, so we will filter the main list.
+export async function getMoviesByIds(ids: string[], allMovies: Movie[]): Promise<Movie[]> {
   if (ids.length === 0) {
     return [];
   }
-  // Instead of searching, we'll get all movies and filter.
-  // This is more robust if the search function has side-effects or is rate-limited.
   try {
-    const allMovies = await getMovies();
     const selected = allMovies.filter(movie => ids.includes(movie.id));
     return selected;
   } catch (error) {
