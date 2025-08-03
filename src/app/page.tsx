@@ -49,7 +49,7 @@ export default function Home() {
 
   const handleSearch = useCallback(async (query: string) => {
     const trimmedQuery = query.trim();
-    if (trimmedQuery.length < 3) {
+    if (trimmedQuery.length === 0) {
         setMoviesToDisplay(allMovies);
         return;
     }
@@ -57,37 +57,13 @@ export default function Home() {
     setIsSearching(true);
     try {
         const results = await searchMovies(trimmedQuery);
-        if (results.length > 0) {
-            // New movie found, refetch all to get the updated list
-            await fetchAllMovies();
-            const lowercasedQuery = trimmedQuery.toLowerCase();
-            // This is a bit of a hack. After fetching all, we need to find the movie we just searched for.
-            // The `searchMovies` function calls our backend which adds it to the DB.
-            // Then `fetchAllMovies` gets it. Then we filter for it.
-            // This could be improved if the search API returned the movie and we could add it to state.
-            setTimeout(() => {
-                const justAdded = allMovies.filter(movie => 
-                    movie.title.toLowerCase().includes(lowercasedQuery) || 
-                    movie.id.toLowerCase() === lowercasedQuery
-                );
-                setMoviesToDisplay(justAdded.length > 0 ? justAdded : results);
-            }, 100);
-
-        } else {
-             const lowercasedQuery = trimmedQuery.toLowerCase();
-             const localResults = allMovies.filter(movie => 
-                movie.title.toLowerCase().includes(lowercasedQuery) || 
-                movie.id.toLowerCase() === lowercasedQuery
-             );
-             setMoviesToDisplay(localResults);
-             if(localResults.length === 0) {
-                toast({
-                    title: 'Search Result',
-                    description: 'Movie not found in our database or OMDb.',
-                });
-             }
+        setMoviesToDisplay(results);
+        if (results.length === 0) {
+            toast({
+                title: 'Search Result',
+                description: 'Movie not found.',
+            });
         }
-
     } catch (error) {
         console.error("Search failed:", error);
         toast({
@@ -98,21 +74,16 @@ export default function Home() {
     } finally {
         setIsSearching(false);
     }
-  }, [allMovies, toast, fetchAllMovies]);
-
+  }, [allMovies, toast]);
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
         const trimmedSearchTerm = searchTerm.trim();
-        if(trimmedSearchTerm.length >= 3) {
-           handleSearch(trimmedSearchTerm);
-        } else {
-            setMoviesToDisplay(allMovies);
-        }
+        handleSearch(trimmedSearchTerm);
     }, 500); // 500ms debounce delay
 
     return () => clearTimeout(debounceTimer);
-  }, [searchTerm, handleSearch, allMovies]);
+  }, [searchTerm, handleSearch]);
 
   const handleSelectMovie = useCallback((movieId: string) => {
     setSelectedMovies((prev) =>
@@ -274,7 +245,7 @@ export default function Home() {
         
         <section>
               <h2 className="text-3xl font-bold mb-6 text-foreground">
-                  {searchTerm.trim().length >=3 ? 'Search Results' : 'Available Movies'}
+                  {searchTerm.trim().length > 0 ? 'Search Results' : 'Available Movies'}
               </h2>
               {isFetchingInitialMovies ? (
                 <div className="flex justify-center items-center h-64">
