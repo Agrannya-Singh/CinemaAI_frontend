@@ -3,7 +3,7 @@ import type { ApiMovie } from '@/lib/movies';
 
 const API_BASE_URL = 'https://cinemaai-backend.onrender.com';
 
-const OFFENSIVE_TERMS = ['nigger'];
+const OFFENSIVE_TERMS = ['murder','kill'];
 
 function containsOffensiveTerm(text: string): boolean {
     if (!text) return false;
