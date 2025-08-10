@@ -18,6 +18,7 @@ The user flow is simple:
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS with ShadCN UI components
 - **UI:** React
+- **Backend:** Uses python to provide movie recommendations based on ML model
 
 ## Getting Started
 
