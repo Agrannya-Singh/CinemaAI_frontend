@@ -33,7 +33,6 @@ export default function Home() {
     try {
         const movies = await getMovies();
         setAllMovies(movies);
-        // On initial load, if no genre is selected, display all movies
         if (!selectedGenre) {
           setMoviesToDisplay(movies);
         }
@@ -54,28 +53,27 @@ export default function Home() {
     fetchAllMovies();
   }, [fetchAllMovies]);
 
-  const handleSearch = useCallback(async (query: string) => {
+ const handleSearch = useCallback(async (query: string) => {
     const trimmedQuery = query.trim();
     if (trimmedQuery.length === 0) {
-        if (selectedGenre) {
-            handleGenreSelect(selectedGenre);
-        } else {
-            setMoviesToDisplay(allMovies);
-        }
+        setMoviesToDisplay(allMovies);
         return;
     }
     
     setIsSearching(true);
     try {
         const results = await searchMovies(trimmedQuery);
-        // After searching, refresh the full movie list to include the new one
-        if (results.length > 0) {
-            await fetchAllMovies();
-        }
         setMoviesToDisplay(results);
         setSelectedGenre(null); 
         
-        if (results.length === 0) {
+        if (results.length > 0) {
+            // Add new search results to the main list if they aren't there already
+            setAllMovies(prevMovies => {
+                const existingIds = new Set(prevMovies.map(m => m.id));
+                const newMovies = results.filter(m => !existingIds.has(m.id));
+                return [...prevMovies, ...newMovies];
+            });
+        } else {
             toast({
                 title: 'Search Result',
                 description: 'Movie not found.',
@@ -91,18 +89,22 @@ export default function Home() {
     } finally {
         setIsSearching(false);
     }
-  }, [allMovies, toast, selectedGenre, fetchAllMovies]);
+}, [allMovies, toast]);
 
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
       if (searchTerm) {
         handleSearch(searchTerm);
+      } else {
+        if (!selectedGenre) {
+          setMoviesToDisplay(allMovies);
+        }
       }
     }, 500);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchTerm, handleSearch]);
+  }, [searchTerm, handleSearch, allMovies, selectedGenre]);
 
 
   const handleSelectMovie = useCallback((movieId: string) => {
