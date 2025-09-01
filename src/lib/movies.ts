@@ -61,17 +61,13 @@ export async function getMovies(): Promise<Movie[]> {
 
 export async function searchMovies(identifier: string): Promise<Movie[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/search/${identifier}`);
+    const response = await fetch(`${API_BASE_URL}/search/${encodeURIComponent(identifier)}`);
     if (!response.ok) {
-      // If the backend search fails, we can just return an empty array or handle the error as needed.
       console.error('Backend search failed:', response.statusText);
       return [];
     }
     const data: ApiMovie[] = await response.json();
-    if (data.length > 0) {
-      return data.map(transformApiMovie).filter((movie): movie is Movie => movie !== null);
-    }
-    return [];
+    return data.map(transformApiMovie).filter((movie): movie is Movie => movie !== null);
   } catch (error) {
     console.error('Error in searchMovies:', error);
     return [];
@@ -108,3 +104,5 @@ export function getGenres(movies: Movie[]): string[] {
     });
     return Array.from(allGenres).sort();
 }
+
+    

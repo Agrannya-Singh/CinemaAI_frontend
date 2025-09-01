@@ -33,7 +33,10 @@ export default function Home() {
     try {
         const movies = await getMovies();
         setAllMovies(movies);
-        setMoviesToDisplay(movies);
+        // On initial load, if no genre is selected, display all movies
+        if (!selectedGenre) {
+          setMoviesToDisplay(movies);
+        }
         setGenres(getGenres(movies));
     } catch (error) {
         console.error("Failed to fetch movies:", error);
@@ -45,7 +48,7 @@ export default function Home() {
     } finally {
         setIsFetchingInitialMovies(false);
     }
-  }, [toast]);
+  }, [toast, selectedGenre]);
 
   useEffect(() => {
     fetchAllMovies();
@@ -54,7 +57,6 @@ export default function Home() {
   const handleSearch = useCallback(async (query: string) => {
     const trimmedQuery = query.trim();
     if (trimmedQuery.length === 0) {
-        // If search is cleared, restore genre filter if active, otherwise show all
         if (selectedGenre) {
             handleGenreSelect(selectedGenre);
         } else {
@@ -66,8 +68,13 @@ export default function Home() {
     setIsSearching(true);
     try {
         const results = await searchMovies(trimmedQuery);
+        // After searching, refresh the full movie list to include the new one
+        if (results.length > 0) {
+            await fetchAllMovies();
+        }
         setMoviesToDisplay(results);
-        setSelectedGenre(null); // Reset genre filter on new search
+        setSelectedGenre(null); 
+        
         if (results.length === 0) {
             toast({
                 title: 'Search Result',
@@ -84,15 +91,19 @@ export default function Home() {
     } finally {
         setIsSearching(false);
     }
-  }, [allMovies, toast, selectedGenre]);
+  }, [allMovies, toast, selectedGenre, fetchAllMovies]);
+
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
+      if (searchTerm) {
         handleSearch(searchTerm);
-    }, 500); // 500ms debounce delay
+      }
+    }, 500);
 
     return () => clearTimeout(debounceTimer);
   }, [searchTerm, handleSearch]);
+
 
   const handleSelectMovie = useCallback((movieId: string) => {
     setSelectedMovies((prev) =>
@@ -187,7 +198,7 @@ export default function Home() {
   
   const handleGenreSelect = (genre: string | null) => {
     setSelectedGenre(genre);
-    setSearchTerm(''); // Clear search term when filtering by genre
+    setSearchTerm(''); 
     if (genre) {
       const filteredMovies = allMovies.filter(movie => movie.genre.toLowerCase().includes(genre.toLowerCase()));
       setMoviesToDisplay(filteredMovies);
@@ -197,14 +208,14 @@ export default function Home() {
   };
   
   const filteredMoviesHeader = useMemo(() => {
-    if (searchTerm.trim().length > 0) {
+    if (searchTerm.trim().length > 0 && !isSearching) {
       return 'Search Results';
     }
     if (selectedGenre) {
       return `Movies: ${selectedGenre.charAt(0).toUpperCase() + selectedGenre.slice(1)}`;
     }
     return 'All Available Movies';
-  }, [searchTerm, selectedGenre]);
+  }, [searchTerm, selectedGenre, isSearching]);
 
 
   return (
@@ -236,7 +247,7 @@ export default function Home() {
                         </div>
                         <Input
                             type="text"
-                            placeholder="Search by title or IMDb ID..."
+                            placeholder="Search for any movie to add it..."
                             className="pl-10 text-base bg-secondary border-border focus:ring-primary"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -372,3 +383,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
