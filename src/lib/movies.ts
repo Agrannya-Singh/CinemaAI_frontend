@@ -1,3 +1,4 @@
+
 'use client';
 
 export interface Movie {
@@ -148,3 +149,20 @@ export async function getMoviesByIds(ids: string[], allMovies: Movie[]): Promise
     return [];
   }
 }
+
+export function getGenres(movies: Movie[]): string[] {
+    const allGenres = new Set<string>();
+    movies.forEach(movie => {
+        if (movie.genre) {
+            movie.genre.split(',').forEach(genre => {
+                const trimmedGenre = genre.trim();
+                if (trimmedGenre) {
+                    allGenres.add(trimmedGenre.toLowerCase());
+                }
+            });
+        }
+    });
+    return Array.from(allGenres).sort();
+}
+
+    

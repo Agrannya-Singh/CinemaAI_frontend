@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo, useCallback, useTransition, useEffect } from 'react';
-import { Movie, getMovies, getMoviesByIds, searchMovies, transformApiMovie } from '@/lib/movies';
+import { Movie, getMovies, getMoviesByIds, searchMovies, transformApiMovie, getGenres } from '@/lib/movies';
 import { MovieCard } from '@/components/movie-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Film, LoaderCircle, Download, Clapperboard } from 'lucide-react';
 import type { ApiMovie } from '@/lib/movies';
+import { Badge } from '@/components/ui/badge';
 
 export default function Home() {
   const { toast } = useToast();
@@ -24,6 +25,8 @@ export default function Home() {
   const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
   const [isPending, startTransition] = useTransition();
+  const [genres, setGenres] = useState<string[]>([]);
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
 
   const fetchAllMovies = useCallback(async () => {
     setIsFetchingInitialMovies(true);
@@ -31,6 +34,7 @@ export default function Home() {
         const movies = await getMovies();
         setAllMovies(movies);
         setMoviesToDisplay(movies);
+        setGenres(getGenres(movies));
     } catch (error) {
         console.error("Failed to fetch movies:", error);
         toast({
@@ -51,6 +55,7 @@ export default function Home() {
     const trimmedQuery = query.trim();
     if (trimmedQuery.length === 0) {
         setMoviesToDisplay(allMovies);
+        setSelectedGenre(null);
         return;
     }
     
@@ -58,6 +63,7 @@ export default function Home() {
     try {
         const results = await searchMovies(trimmedQuery);
         setMoviesToDisplay(results);
+        setSelectedGenre(null); // Reset genre filter on new search
         if (results.length === 0) {
             toast({
                 title: 'Search Result',
@@ -176,6 +182,17 @@ export default function Home() {
     URL.revokeObjectURL(url);
   };
   
+  const handleGenreSelect = (genre: string | null) => {
+    setSelectedGenre(genre);
+    setSearchTerm(''); // Clear search term when filtering by genre
+    if (genre) {
+      const filteredMovies = allMovies.filter(movie => movie.genre.toLowerCase().includes(genre.toLowerCase()));
+      setMoviesToDisplay(filteredMovies);
+    } else {
+      setMoviesToDisplay(allMovies);
+    }
+  };
+  
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
        <header className="sticky top-0 z-20 w-full bg-gradient-to-b from-background to-transparent">
@@ -244,9 +261,32 @@ export default function Home() {
         </section>
         
         <section>
-              <h2 className="text-3xl font-bold mb-6 text-foreground">
-                  {searchTerm.trim().length > 0 ? 'Search Results' : 'Available Movies'}
-              </h2>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                <h2 className="text-3xl font-bold text-foreground mb-4 sm:mb-0">
+                    {searchTerm.trim().length > 0 ? 'Search Results' : 'Available Movies'}
+                </h2>
+                <div className="flex flex-wrap gap-2 justify-start sm:justify-end">
+                  <Button 
+                    variant={selectedGenre === null ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleGenreSelect(null)}
+                    className="font-semibold"
+                  >
+                    All Genres
+                  </Button>
+                  {genres.map(genre => (
+                    <Button 
+                      key={genre}
+                      variant={selectedGenre === genre ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleGenreSelect(genre)}
+                      className="font-semibold capitalize"
+                    >
+                      {genre}
+                    </Button>
+                  ))}
+                </div>
+              </div>
               {isFetchingInitialMovies ? (
                 <div className="flex justify-center items-center h-64">
                   <LoaderCircle className="h-16 w-16 animate-spin text-primary" />
@@ -267,7 +307,7 @@ export default function Home() {
                   <Card className="flex flex-col items-center justify-center text-center p-8 h-64 bg-card border-dashed border-border">
                     <Film className="h-16 w-16 text-muted-foreground mb-4" />
                     <p className="text-muted-foreground font-medium">
-                      {searchTerm ? 'No movies found for your search.' : 'No movies available.'}
+                      {searchTerm ? 'No movies found for your search.' : (selectedGenre ? `No movies found in the ${selectedGenre} genre.` : 'No movies available.')}
                     </p>
                   </Card>
                 )
@@ -317,3 +357,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
