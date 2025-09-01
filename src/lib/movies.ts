@@ -1,7 +1,10 @@
+
 'use client';
+import { OMDbMovie } from './omdb-api';
+
 
 export interface Movie {
-  id: string; // This will be the imdbID from the API
+  id: string; 
   imdbID: string;
   title: string;
   year: string;
@@ -13,8 +16,6 @@ export interface Movie {
   rating: number;
 }
 
-// The API response structure is different from the old Movie interface.
-// Let's define a type for the API response.
 export interface ApiMovie {
   id: string; // imdbID
   title: string;
@@ -26,54 +27,23 @@ export interface ApiMovie {
   release_date: string; // Year
 }
 
-// Type for OMDb API response
-interface OMDbMovie {
-    Title: string;
-    Year: string;
-    imdbID: string;
-    Type: string;
-    Poster: string;
-    Genre?: string;
-    Plot?: string;
-    Actors?: string;
-    imdbRating?: string;
-    Response: "True" | "False";
-    Error?: string;
-}
-
-
-const API_BASE_URL = '/api'; // Using local API proxy
+const API_BASE_URL = '/api'; 
 
 // Helper to transform API movie to our local Movie interface
 export function transformApiMovie(apiMovie: ApiMovie): Movie | null {
-    return {
+  if (!apiMovie || !apiMovie.id) return null;
+  return {
     id: apiMovie.id,
     imdbID: apiMovie.id,
     title: apiMovie.title,
     year: apiMovie.release_date,
     genre: apiMovie.genres,
-    poster: apiMovie.poster_path || `https://placehold.co/300x450.png`,
-    posterHint: apiMovie.overview.split(' ').slice(0, 2).join(' ').toLowerCase() || 'movie poster',
+    poster: apiMovie.poster_path === 'N/A' ? `https://placehold.co/300x450.png` : apiMovie.poster_path,
+    posterHint: apiMovie.overview?.split(' ').slice(0, 2).join(' ').toLowerCase() || 'movie poster',
     overview: apiMovie.overview,
     cast: apiMovie.cast,
     rating: apiMovie.vote_average,
   };
-}
-
-function transformOMDbMovie(omdbMovie: OMDbMovie): Movie | null {
-    if (omdbMovie.Response !== "True") return null;
-    return {
-        id: omdbMovie.imdbID,
-        imdbID: omdbMovie.imdbID,
-        title: omdbMovie.Title,
-        year: omdbMovie.Year,
-        genre: omdbMovie.Genre || 'N/A',
-        poster: omdbMovie.Poster !== 'N/A' ? omdbMovie.Poster : `https://placehold.co/300x450.png`,
-        posterHint: omdbMovie.Plot?.split(' ').slice(0, 2).join(' ').toLowerCase() || 'movie poster',
-        overview: omdbMovie.Plot || 'No overview available.',
-        cast: omdbMovie.Actors || 'N/A',
-        rating: omdbMovie.imdbRating ? parseFloat(omdbMovie.imdbRating) : 0,
-    };
 }
 
 
@@ -93,40 +63,13 @@ export async function getMovies(): Promise<Movie[]> {
 
 export async function searchMovies(identifier: string): Promise<Movie[]> {
   try {
-    // First, try searching via our backend
-    const response = await fetch(`${API_BASE_URL}/search/${identifier}`);
-    if (response.ok) {
-      const data: ApiMovie[] = await response.json();
-       if (data.length > 0) {
-        return data.map(transformApiMovie).filter((movie): movie is Movie => movie !== null);
-      }
+    const response = await fetch(`${API_BASE_URL}/search/${encodeURIComponent(identifier)}`);
+    if (!response.ok) {
+      console.error('Backend search failed:', response.statusText);
+      return [];
     }
-    
-    // If backend search fails or returns no results, try OMDb directly as a fallback
-    console.log('Backend search failed or empty, trying OMDb API fallback.');
-    const omdbApiKey = process.env.NEXT_PUBLIC_OMDB_API_KEY;
-    if (!omdbApiKey) {
-        console.error('OMDb API key is not configured.');
-        return [];
-    }
-
-    const omdbUrl = `http://www.omdbapi.com/?t=${encodeURIComponent(identifier)}&apikey=${omdbApiKey}`;
-    const omdbResponse = await fetch(omdbUrl);
-    
-    if (!omdbResponse.ok) {
-        throw new Error('Failed to fetch from OMDb API.');
-    }
-
-    const omdbData: OMDbMovie = await omdbResponse.json();
-
-    if (omdbData.Response === "True") {
-        const movie = transformOMDbMovie(omdbData);
-        // We can't add to our backend from here, but we can return it to the UI for display
-        return movie ? [movie] : [];
-    } else {
-        console.log('Movie not found in OMDb.');
-        return [];
-    }
+    const data: ApiMovie[] = await response.json();
+    return data.map(transformApiMovie).filter((movie): movie is Movie => movie !== null);
   } catch (error) {
     console.error('Error in searchMovies:', error);
     return [];
@@ -147,4 +90,19 @@ export async function getMoviesByIds(ids: string[], allMovies: Movie[]): Promise
     console.error('Error in getMoviesByIds:', error);
     return [];
   }
+}
+
+export function getGenres(movies: Movie[]): string[] {
+    const allGenres = new Set<string>();
+    movies.forEach(movie => {
+        if (movie.genre) {
+            movie.genre.split(',').forEach(genre => {
+                const trimmedGenre = genre.trim();
+                if (trimmedGenre) {
+                    allGenres.add(trimmedGenre.toLowerCase());
+                }
+            });
+        }
+    });
+    return Array.from(allGenres).sort();
 }

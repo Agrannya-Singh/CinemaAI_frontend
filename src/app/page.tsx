@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo, useCallback, useTransition, useEffect } from 'react';
-import { Movie, getMovies, getMoviesByIds, searchMovies, transformApiMovie } from '@/lib/movies';
+import { Movie, getMovies, getMoviesByIds, searchMovies, transformApiMovie, getGenres } from '@/lib/movies';
 import { MovieCard } from '@/components/movie-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Film, LoaderCircle, Download, Clapperboard } from 'lucide-react';
 import type { ApiMovie } from '@/lib/movies';
+import { Badge } from '@/components/ui/badge';
 
 export default function Home() {
   const { toast } = useToast();
@@ -24,13 +25,18 @@ export default function Home() {
   const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
   const [isPending, startTransition] = useTransition();
+  const [genres, setGenres] = useState<string[]>([]);
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
 
   const fetchAllMovies = useCallback(async () => {
     setIsFetchingInitialMovies(true);
     try {
         const movies = await getMovies();
         setAllMovies(movies);
-        setMoviesToDisplay(movies);
+        if (!selectedGenre) {
+          setMoviesToDisplay(movies);
+        }
+        setGenres(getGenres(movies));
     } catch (error) {
         console.error("Failed to fetch movies:", error);
         toast({
@@ -41,13 +47,13 @@ export default function Home() {
     } finally {
         setIsFetchingInitialMovies(false);
     }
-  }, [toast]);
+  }, [toast, selectedGenre]);
 
   useEffect(() => {
     fetchAllMovies();
   }, [fetchAllMovies]);
 
-  const handleSearch = useCallback(async (query: string) => {
+ const handleSearch = useCallback(async (query: string) => {
     const trimmedQuery = query.trim();
     if (trimmedQuery.length === 0) {
         setMoviesToDisplay(allMovies);
@@ -58,7 +64,16 @@ export default function Home() {
     try {
         const results = await searchMovies(trimmedQuery);
         setMoviesToDisplay(results);
-        if (results.length === 0) {
+        setSelectedGenre(null); 
+        
+        if (results.length > 0) {
+            // Add new search results to the main list if they aren't there already
+            setAllMovies(prevMovies => {
+                const existingIds = new Set(prevMovies.map(m => m.id));
+                const newMovies = results.filter(m => !existingIds.has(m.id));
+                return [...prevMovies, ...newMovies];
+            });
+        } else {
             toast({
                 title: 'Search Result',
                 description: 'Movie not found.',
@@ -74,16 +89,23 @@ export default function Home() {
     } finally {
         setIsSearching(false);
     }
-  }, [allMovies, toast]);
+}, [allMovies, toast]);
+
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
-        const trimmedSearchTerm = searchTerm.trim();
-        handleSearch(trimmedSearchTerm);
-    }, 500); // 500ms debounce delay
+      if (searchTerm) {
+        handleSearch(searchTerm);
+      } else {
+        if (!selectedGenre) {
+          setMoviesToDisplay(allMovies);
+        }
+      }
+    }, 500);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchTerm, handleSearch]);
+  }, [searchTerm, handleSearch, allMovies, selectedGenre]);
+
 
   const handleSelectMovie = useCallback((movieId: string) => {
     setSelectedMovies((prev) =>
@@ -176,6 +198,28 @@ export default function Home() {
     URL.revokeObjectURL(url);
   };
   
+  const handleGenreSelect = (genre: string | null) => {
+    setSelectedGenre(genre);
+    setSearchTerm(''); 
+    if (genre) {
+      const filteredMovies = allMovies.filter(movie => movie.genre.toLowerCase().includes(genre.toLowerCase()));
+      setMoviesToDisplay(filteredMovies);
+    } else {
+      setMoviesToDisplay(allMovies);
+    }
+  };
+  
+  const filteredMoviesHeader = useMemo(() => {
+    if (searchTerm.trim().length > 0 && !isSearching) {
+      return 'Search Results';
+    }
+    if (selectedGenre) {
+      return `Movies: ${selectedGenre.charAt(0).toUpperCase() + selectedGenre.slice(1)}`;
+    }
+    return 'All Available Movies';
+  }, [searchTerm, selectedGenre, isSearching]);
+
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
        <header className="sticky top-0 z-20 w-full bg-gradient-to-b from-background to-transparent">
@@ -205,7 +249,7 @@ export default function Home() {
                         </div>
                         <Input
                             type="text"
-                            placeholder="Search by title or IMDb ID..."
+                            placeholder="Search for any movie to add it..."
                             className="pl-10 text-base bg-secondary border-border focus:ring-primary"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -244,9 +288,33 @@ export default function Home() {
         </section>
         
         <section>
-              <h2 className="text-3xl font-bold mb-6 text-foreground">
-                  {searchTerm.trim().length > 0 ? 'Search Results' : 'Available Movies'}
-              </h2>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                <h2 className="text-3xl font-bold text-foreground mb-4 sm:mb-0">
+                  {filteredMoviesHeader}
+                  <Badge variant="secondary" className="ml-3 text-lg">{moviesToDisplay.length}</Badge>
+                </h2>
+                <div className="flex flex-wrap gap-2 justify-start sm:justify-end">
+                  <Button 
+                    variant={selectedGenre === null ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleGenreSelect(null)}
+                    className="font-semibold"
+                  >
+                    All Genres
+                  </Button>
+                  {genres.map(genre => (
+                    <Button 
+                      key={genre}
+                      variant={selectedGenre === genre ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleGenreSelect(genre)}
+                      className="font-semibold capitalize"
+                    >
+                      {genre}
+                    </Button>
+                  ))}
+                </div>
+              </div>
               {isFetchingInitialMovies ? (
                 <div className="flex justify-center items-center h-64">
                   <LoaderCircle className="h-16 w-16 animate-spin text-primary" />
@@ -267,7 +335,7 @@ export default function Home() {
                   <Card className="flex flex-col items-center justify-center text-center p-8 h-64 bg-card border-dashed border-border">
                     <Film className="h-16 w-16 text-muted-foreground mb-4" />
                     <p className="text-muted-foreground font-medium">
-                      {searchTerm ? 'No movies found for your search.' : 'No movies available.'}
+                      {searchTerm ? 'No movies found for your search.' : (selectedGenre ? `No movies found in the ${selectedGenre} genre.` : 'No movies available.')}
                     </p>
                   </Card>
                 )
@@ -317,3 +385,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
