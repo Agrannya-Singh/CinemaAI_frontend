@@ -54,8 +54,12 @@ export default function Home() {
   const handleSearch = useCallback(async (query: string) => {
     const trimmedQuery = query.trim();
     if (trimmedQuery.length === 0) {
-        setMoviesToDisplay(allMovies);
-        setSelectedGenre(null);
+        // If search is cleared, restore genre filter if active, otherwise show all
+        if (selectedGenre) {
+            handleGenreSelect(selectedGenre);
+        } else {
+            setMoviesToDisplay(allMovies);
+        }
         return;
     }
     
@@ -80,12 +84,11 @@ export default function Home() {
     } finally {
         setIsSearching(false);
     }
-  }, [allMovies, toast]);
+  }, [allMovies, toast, selectedGenre]);
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
-        const trimmedSearchTerm = searchTerm.trim();
-        handleSearch(trimmedSearchTerm);
+        handleSearch(searchTerm);
     }, 500); // 500ms debounce delay
 
     return () => clearTimeout(debounceTimer);
@@ -193,6 +196,17 @@ export default function Home() {
     }
   };
   
+  const filteredMoviesHeader = useMemo(() => {
+    if (searchTerm.trim().length > 0) {
+      return 'Search Results';
+    }
+    if (selectedGenre) {
+      return `Movies: ${selectedGenre.charAt(0).toUpperCase() + selectedGenre.slice(1)}`;
+    }
+    return 'All Available Movies';
+  }, [searchTerm, selectedGenre]);
+
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
        <header className="sticky top-0 z-20 w-full bg-gradient-to-b from-background to-transparent">
@@ -263,7 +277,8 @@ export default function Home() {
         <section>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
                 <h2 className="text-3xl font-bold text-foreground mb-4 sm:mb-0">
-                    {searchTerm.trim().length > 0 ? 'Search Results' : 'Available Movies'}
+                  {filteredMoviesHeader}
+                  <Badge variant="secondary" className="ml-3 text-lg">{moviesToDisplay.length}</Badge>
                 </h2>
                 <div className="flex flex-wrap gap-2 justify-start sm:justify-end">
                   <Button 
@@ -357,5 +372,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
