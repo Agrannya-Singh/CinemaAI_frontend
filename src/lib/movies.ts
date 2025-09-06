@@ -1,7 +1,5 @@
 
 'use client';
-import { OMDbMovie } from './omdb-api';
-
 
 export interface Movie {
   id: string; 
@@ -78,14 +76,25 @@ export async function searchMovies(identifier: string): Promise<Movie[]> {
 
 
 // We need a way to get movie details for the selected movies.
-// The API doesn't have a getByIds endpoint, so we will filter the main list.
-export async function getMoviesByIds(ids: string[], allMovies: Movie[]): Promise<Movie[]> {
+// Since we don't store all movies in memory, we must fetch them.
+// We can optimize by first trying to find them in the displayed list.
+export async function getMoviesByIds(ids: string[]): Promise<Movie[]> {
   if (ids.length === 0) {
     return [];
   }
+  
+  // This is a simplified approach. In a real-world scenario, you might have
+  // a more sophisticated caching layer or a dedicated multi-fetch endpoint.
+  // For now, we'll fetch them one by one if not found.
+  const moviePromises = ids.map(id => searchMovies(id));
+  
   try {
-    const selected = allMovies.filter(movie => ids.includes(movie.id));
-    return selected;
+    const movieArrays = await Promise.all(moviePromises);
+    // Flatten the array of arrays and filter out any empty results
+    const movies = movieArrays.flat().filter(movie => movie !== null);
+    // Ensure uniqueness
+    const uniqueMovies = Array.from(new Map(movies.map(m => [m.id, m])).values());
+    return uniqueMovies;
   } catch (error) {
     console.error('Error in getMoviesByIds:', error);
     return [];

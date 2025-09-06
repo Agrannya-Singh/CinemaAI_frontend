@@ -2,11 +2,11 @@
 'use client';
 
 import { useState, useMemo, useCallback, useTransition, useEffect } from 'react';
-import { Movie, getMovies, getMoviesByIds, searchMovies, transformApiMovie, getGenres } from '@/lib/movies';
+import { Movie, getMovies, searchMovies, transformApiMovie, getMoviesByIds } from '@/lib/movies';
 import { MovieCard } from '@/components/movie-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Film, LoaderCircle, Download, Clapperboard } from 'lucide-react';
@@ -16,28 +16,41 @@ import { Badge } from '@/components/ui/badge';
 export default function Home() {
   const { toast } = useToast();
   
-  const [allMovies, setAllMovies] = useState<Movie[]>([]);
   const [moviesToDisplay, setMoviesToDisplay] = useState<Movie[]>([]);
   const [isFetchingInitialMovies, setIsFetchingInitialMovies] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [isSyncingBackend, setIsSyncingBackend] = useState(false);
   const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
   const [isPending, startTransition] = useTransition();
   const [genres, setGenres] = useState<string[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  
+  const [selectedMovieDetails, setSelectedMovieDetails] = useState<Movie[]>([]);
 
-  const fetchAllMovies = useCallback(async () => {
+  const fetchAllMovies = useCallback(async (selectGenre: string | null = selectedGenre) => {
     setIsFetchingInitialMovies(true);
     try {
-        const movies = await getMovies();
-        setAllMovies(movies);
-        if (!selectedGenre) {
-          setMoviesToDisplay(movies);
+        const fetchedMovies = await getMovies();
+        const uniqueGenres = new Set<string>();
+        fetchedMovies.forEach(movie => {
+            if (movie.genre) {
+                movie.genre.split(',').forEach(g => {
+                    const trimmed = g.trim().toLowerCase();
+                    if (trimmed) uniqueGenres.add(trimmed);
+                });
+            }
+        });
+        setGenres(Array.from(uniqueGenres).sort());
+        
+        if (selectGenre) {
+          const filtered = fetchedMovies.filter(m => m.genre.toLowerCase().includes(selectGenre.toLowerCase()));
+          setMoviesToDisplay(filtered);
+        } else {
+          setMoviesToDisplay(fetchedMovies);
         }
-        setGenres(getGenres(movies));
+
     } catch (error) {
         console.error("Failed to fetch movies:", error);
         toast({
@@ -52,12 +65,12 @@ export default function Home() {
 
   useEffect(() => {
     fetchAllMovies();
-  }, [fetchAllMovies]);
+  }, []); // Only run on initial mount
 
  const handleSearch = useCallback(async (query: string) => {
     const trimmedQuery = query.trim();
     if (trimmedQuery.length === 0) {
-        setMoviesToDisplay(allMovies);
+        fetchAllMovies(null); // Reset to all movies if search is cleared
         return;
     }
     
@@ -68,19 +81,8 @@ export default function Home() {
         setSelectedGenre(null); 
         
         if (results.length > 0) {
-            const isNewMovie = results.some(resultMovie => !allMovies.find(m => m.id === resultMovie.id));
-            if (isNewMovie) {
-                // New movie found, let's give the backend a moment to process.
-                setIsSyncingBackend(true);
-                toast({
-                    title: 'Syncing with Backend',
-                    description: 'Adding new movie to the database. Please wait a moment...',
-                });
-                setTimeout(() => {
-                    fetchAllMovies();
-                    setIsSyncingBackend(false);
-                }, 5000); // Wait 5 seconds for backend to rebuild models
-            }
+            // New movie found, let's refresh the main list in the background
+            fetchAllMovies(); 
         } else {
             toast({
                 title: 'Search Result',
@@ -97,7 +99,7 @@ export default function Home() {
     } finally {
         setIsSearching(false);
     }
-}, [allMovies, toast, fetchAllMovies]);
+}, [toast, fetchAllMovies]);
 
 
   useEffect(() => {
@@ -105,22 +107,23 @@ export default function Home() {
       if (searchTerm) {
         handleSearch(searchTerm);
       } else {
-        if (!selectedGenre) {
-          setMoviesToDisplay(allMovies);
-        }
+        // If search is cleared, fetch all movies based on the current genre
+        fetchAllMovies(selectedGenre);
       }
     }, 500);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchTerm, handleSearch, allMovies, selectedGenre]);
+  }, [searchTerm, handleSearch, selectedGenre, fetchAllMovies]);
 
 
-  const handleSelectMovie = useCallback((movieId: string) => {
-    setSelectedMovies((prev) =>
-      prev.includes(movieId)
-        ? prev.filter((id) => id !== movieId)
-        : [...prev, movieId]
-    );
+ const handleSelectMovie = useCallback(async (movieId: string) => {
+    setSelectedMovies(prev => {
+      if (prev.includes(movieId)) {
+        return prev.filter(id => id !== movieId);
+      } else {
+        return [...prev, movieId];
+      }
+    });
   }, []);
   
   const handleGetRecommendations = async () => {
@@ -174,19 +177,19 @@ export default function Home() {
     });
   };
 
-  const [selectedMovieDetails, setSelectedMovieDetails] = useState<Movie[]>([]);
-  
   useEffect(() => {
     const fetchSelectedMovieDetails = async () => {
-      if (selectedMovies.length > 0) {
-        const details = await getMoviesByIds(selectedMovies, allMovies);
-        setSelectedMovieDetails(details);
-      } else {
+      if (selectedMovies.length === 0) {
         setSelectedMovieDetails([]);
+        return;
       }
+      
+      const details = await getMoviesByIds(selectedMovies);
+      setSelectedMovieDetails(details);
     };
+
     fetchSelectedMovieDetails();
-  }, [selectedMovies, allMovies]);
+  }, [selectedMovies]);
 
   const handleDownloadRecommendations = () => {
     if (recommendations.length === 0) {
@@ -213,12 +216,7 @@ export default function Home() {
   const handleGenreSelect = (genre: string | null) => {
     setSelectedGenre(genre);
     setSearchTerm(''); 
-    if (genre) {
-      const filteredMovies = allMovies.filter(movie => movie.genre.toLowerCase().includes(genre.toLowerCase()));
-      setMoviesToDisplay(filteredMovies);
-    } else {
-      setMoviesToDisplay(allMovies);
-    }
+    fetchAllMovies(genre);
   };
   
   const filteredMoviesHeader = useMemo(() => {
@@ -327,7 +325,7 @@ export default function Home() {
                   ))}
                 </div>
               </div>
-              {isFetchingInitialMovies || isSyncingBackend ? (
+              {isFetchingInitialMovies ? (
                 <div className="flex justify-center items-center h-64">
                   <LoaderCircle className="h-16 w-16 animate-spin text-primary" />
                 </div>
