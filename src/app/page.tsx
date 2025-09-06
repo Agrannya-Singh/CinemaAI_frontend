@@ -330,30 +330,24 @@ export default function Home() {
                   ))}
                 </div>
               </div>
-              {isFetchingInitialMovies ? (
-                <div className="flex justify-center items-center h-64">
-                  <LoaderCircle className="h-16 w-16 animate-spin text-primary" />
+              {moviesToDisplay.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                  {moviesToDisplay.map((movie) => (
+                    <MovieCard
+                      key={movie.id}
+                      movie={movie}
+                      isSelected={selectedMovies.has(movie.id)}
+                      onSelect={() => handleSelectMovie(movie)}
+                    />
+                  ))}
                 </div>
               ) : (
-                moviesToDisplay.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                    {moviesToDisplay.map((movie) => (
-                      <MovieCard
-                        key={movie.id}
-                        movie={movie}
-                        isSelected={selectedMovies.has(movie.id)}
-                        onSelect={() => handleSelectMovie(movie)}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <Card className="flex flex-col items-center justify-center text-center p-8 h-64 bg-card border-dashed border-border">
-                    <Film className="h-16 w-16 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground font-medium">
-                      {searchTerm ? 'No movies found for your search.' : (selectedGenre ? `No movies found in the ${selectedGenre} genre.` : 'No movies available.')}
-                    </p>
-                  </Card>
-                )
+                <Card className="flex flex-col items-center justify-center text-center p-8 h-64 bg-card border-dashed border-border">
+                  <Film className="h-16 w-16 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground font-medium">
+                    {searchTerm ? 'No movies found for your search.' : (selectedGenre ? `No movies found in the ${selectedGenre} genre.` : 'No movies available.')}
+                  </p>
+                </Card>
               )}
         </section>
         
