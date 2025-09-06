@@ -331,11 +331,8 @@ export default function Home() {
                 </div>
               </div>
               {isFetchingInitialMovies ? (
-                <div className="flex flex-col justify-center items-center h-64 space-y-4">
+                <div className="flex justify-center items-center h-64">
                   <LoaderCircle className="h-16 w-16 animate-spin text-primary" />
-                  <p className="text-muted-foreground font-medium text-center">
-                    Waking up the movie database...<br />This may take up to a minute on the first load.
-                  </p>
                 </div>
               ) : (
                 moviesToDisplay.length > 0 ? (
@@ -406,5 +403,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
