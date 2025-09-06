@@ -20,12 +20,11 @@ function filterMovies(movies: ApiMovie[]): ApiMovie[] {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { movie_ids, num_recommendations, genres } = body;
+    const { movie_ids, num_recommendations } = body;
     
     const backendRequestBody = {
         movie_ids,
         num_recommendations,
-        genres: genres || [],
     };
 
     const response = await fetch(`${API_BASE_URL}/recommend`, {
@@ -50,5 +49,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
-
-    

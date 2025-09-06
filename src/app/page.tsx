@@ -71,6 +71,9 @@ export default function Home() {
             setAllMovies(prevMovies => {
                 const existingIds = new Set(prevMovies.map(m => m.id));
                 const newMovies = results.filter(m => !existingIds.has(m.id));
+                if (newMovies.length > 0) {
+                    fetchAllMovies();
+                }
                 return [...prevMovies, ...newMovies];
             });
         } else {
@@ -89,7 +92,7 @@ export default function Home() {
     } finally {
         setIsSearching(false);
     }
-}, [allMovies, toast]);
+}, [allMovies, toast, fetchAllMovies]);
 
 
   useEffect(() => {
@@ -130,7 +133,6 @@ export default function Home() {
         const requestBody = {
           movie_ids: selectedMovies,
           num_recommendations: 10,
-          genres: selectedGenre ? [selectedGenre] : [],
         };
         
         const response = await fetch('/api/recommend', {
@@ -390,7 +392,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
-
-    
