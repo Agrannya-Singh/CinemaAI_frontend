@@ -17,7 +17,6 @@ export default function Home() {
   const { toast } = useToast();
   
   const [moviesToDisplay, setMoviesToDisplay] = useState<Movie[]>([]);
-  const [isFetchingInitialMovies, setIsFetchingInitialMovies] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -28,7 +27,6 @@ export default function Home() {
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
 
   const fetchAllMovies = useCallback(async (selectGenre: string | null = selectedGenre) => {
-    setIsFetchingInitialMovies(true);
     try {
         const fetchedMovies = await getMovies();
         const uniqueGenres = new Set<string>();
@@ -55,8 +53,6 @@ export default function Home() {
             description: 'Could not fetch movies. Please try refreshing the page.',
             variant: 'destructive',
         });
-    } finally {
-        setIsFetchingInitialMovies(false);
     }
   }, [toast, selectedGenre]);
 
@@ -80,15 +76,9 @@ export default function Home() {
             setMoviesToDisplay(prevMovies => {
                 const existingIds = new Set(prevMovies.map(m => m.id));
                 const newMovies = results.filter(r => !existingIds.has(r.id));
-                return [...results, ...prevMovies.filter(pm => !results.some(r => r.id === pm.id))];
+                // Append new movies to the end to avoid layout shifts
+                return [...prevMovies, ...newMovies];
             });
-            // After a successful search that adds a movie, refetch all movies
-            // to ensure the genre list and main list are up to date.
-            const isNewMovie = results.some(r => !moviesToDisplay.some(m => m.id === r.id));
-            if (isNewMovie) {
-                fetchAllMovies(null);
-            }
-
         } else {
             toast({
                 title: 'Search Result',
@@ -108,42 +98,33 @@ export default function Home() {
     } finally {
         setIsSearching(false);
     }
-}, [toast, fetchAllMovies, selectedGenre, moviesToDisplay]);
+}, [toast, fetchAllMovies, selectedGenre]);
 
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
       if (searchTerm) {
         handleSearch(searchTerm);
-      } else if (!isFetchingInitialMovies) { // Avoid refetching if initial load isn't done
+      } else {
         fetchAllMovies(selectedGenre);
       }
     }, 500);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchTerm, handleSearch, selectedGenre, fetchAllMovies, isFetchingInitialMovies]);
+  }, [searchTerm, handleSearch, selectedGenre, fetchAllMovies]);
 
 
   const handleSelectMovie = useCallback((movie: Movie) => {
-    // Only allow selection if the movie is in the main displayed list
-    if (moviesToDisplay.find(m => m.id === movie.id)) {
-        setSelectedMovies(prev => {
-            const newMap = new Map(prev);
-            if (newMap.has(movie.id)) {
-                newMap.delete(movie.id);
-            } else {
-                newMap.set(movie.id, movie.title);
-            }
-            return newMap;
-        });
-    } else {
-        toast({
-            title: "Movie Not Ready",
-            description: "This movie is being added to the library. Please wait a moment and try again.",
-            variant: "default"
-        })
-    }
-  }, [moviesToDisplay, toast]);
+    setSelectedMovies(prev => {
+        const newMap = new Map(prev);
+        if (newMap.has(movie.id)) {
+            newMap.delete(movie.id);
+        } else {
+            newMap.set(movie.id, movie.title);
+        }
+        return newMap;
+    });
+  }, []);
   
   const handleGetRecommendations = async () => {
     if (selectedMovies.size === 0) {
@@ -330,18 +311,17 @@ export default function Home() {
                   ))}
                 </div>
               </div>
-              {moviesToDisplay.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                  {moviesToDisplay.map((movie) => (
-                    <MovieCard
-                      key={movie.id}
-                      movie={movie}
-                      isSelected={selectedMovies.has(movie.id)}
-                      onSelect={() => handleSelectMovie(movie)}
-                    />
-                  ))}
-                </div>
-              ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                {moviesToDisplay.map((movie) => (
+                  <MovieCard
+                    key={movie.id}
+                    movie={movie}
+                    isSelected={selectedMovies.has(movie.id)}
+                    onSelect={() => handleSelectMovie(movie)}
+                  />
+                ))}
+              </div>
+              {moviesToDisplay.length === 0 && !isSearching && (
                 <Card className="flex flex-col items-center justify-center text-center p-8 h-64 bg-card border-dashed border-border">
                   <Film className="h-16 w-16 text-muted-foreground mb-4" />
                   <p className="text-muted-foreground font-medium">
