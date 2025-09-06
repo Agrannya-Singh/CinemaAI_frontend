@@ -65,7 +65,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchAllMovies();
-  }, []); // Only run on initial mount
+  }, [fetchAllMovies]);
 
  const handleSearch = useCallback(async (query: string) => {
     const trimmedQuery = query.trim();
@@ -77,18 +77,21 @@ export default function Home() {
     setIsSearching(true);
     try {
         const results = await searchMovies(trimmedQuery);
-        setMoviesToDisplay(results);
-        setSelectedGenre(null); 
+        // After searching, we display the result but also refresh the main list
+        // in case a new movie was added to the backend DB.
+        fetchAllMovies(); 
         
         if (results.length > 0) {
-            // New movie found, let's refresh the main list in the background
-            fetchAllMovies(); 
+            setMoviesToDisplay(results);
         } else {
             toast({
                 title: 'Search Result',
                 description: 'Movie not found.',
             });
+            fetchAllMovies(selectedGenre); // Go back to the previous view
         }
+        setSelectedGenre(null); 
+        
     } catch (error) {
         console.error("Search failed:", error);
         toast({
@@ -99,7 +102,7 @@ export default function Home() {
     } finally {
         setIsSearching(false);
     }
-}, [toast, fetchAllMovies]);
+}, [toast, fetchAllMovies, selectedGenre]);
 
 
   useEffect(() => {
@@ -116,16 +119,7 @@ export default function Home() {
   }, [searchTerm, handleSearch, selectedGenre, fetchAllMovies]);
 
 
- const handleSelectMovie = useCallback(async (movieId: string) => {
-    // Only allow selection if the movie is in the main list
-    if (!moviesToDisplay.some(m => m.id === movieId)) {
-        toast({
-            title: "Selection Error",
-            description: "Please wait until the movie is fully loaded before selecting.",
-            variant: "destructive"
-        });
-        return;
-    }
+ const handleSelectMovie = useCallback((movieId: string) => {
     setSelectedMovies(prev => {
       if (prev.includes(movieId)) {
         return prev.filter(id => id !== movieId);
@@ -133,7 +127,7 @@ export default function Home() {
         return [...prev, movieId];
       }
     });
-  }, [moviesToDisplay, toast]);
+  }, []);
   
   const handleGetRecommendations = async () => {
     if (selectedMovies.length === 0) {
