@@ -22,6 +22,7 @@ export default function Home() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [isSyncingBackend, setIsSyncingBackend] = useState(false);
   const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
   const [isPending, startTransition] = useTransition();
@@ -67,15 +68,19 @@ export default function Home() {
         setSelectedGenre(null); 
         
         if (results.length > 0) {
-            // Add new search results to the main list if they aren't there already
-            setAllMovies(prevMovies => {
-                const existingIds = new Set(prevMovies.map(m => m.id));
-                const newMovies = results.filter(m => !existingIds.has(m.id));
-                if (newMovies.length > 0) {
+            const isNewMovie = results.some(resultMovie => !allMovies.find(m => m.id === resultMovie.id));
+            if (isNewMovie) {
+                // New movie found, let's give the backend a moment to process.
+                setIsSyncingBackend(true);
+                toast({
+                    title: 'Syncing with Backend',
+                    description: 'Adding new movie to the database. Please wait a moment...',
+                });
+                setTimeout(() => {
                     fetchAllMovies();
-                }
-                return [...prevMovies, ...newMovies];
-            });
+                    setIsSyncingBackend(false);
+                }, 5000); // Wait 5 seconds for backend to rebuild models
+            }
         } else {
             toast({
                 title: 'Search Result',
@@ -145,7 +150,7 @@ export default function Home() {
 
         if (!response.ok) {
            const errorData = await response.json();
-           throw new Error(errorData.details || 'Failed to fetch recommendations');
+           throw new Error(errorData.detail || 'Failed to fetch recommendations');
         }
 
         const recommendedApiMovies: ApiMovie[] = await response.json();
@@ -322,7 +327,7 @@ export default function Home() {
                   ))}
                 </div>
               </div>
-              {isFetchingInitialMovies ? (
+              {isFetchingInitialMovies || isSyncingBackend ? (
                 <div className="flex justify-center items-center h-64">
                   <LoaderCircle className="h-16 w-16 animate-spin text-primary" />
                 </div>
