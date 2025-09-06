@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { Movie, transformApiMovie } from '@/lib/movies';
-import { OMDbMovie, OMDbSearchResult } from '@/lib/omdb-api';
+import { OMDbMovie } from '@/lib/omdb-api';
 
 const PREDEFINED_MOVIE_IDS = [
   'tt0111161', // The Shawshank Redemption
