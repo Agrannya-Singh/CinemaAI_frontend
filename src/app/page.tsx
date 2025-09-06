@@ -82,6 +82,13 @@ export default function Home() {
                 const newMovies = results.filter(r => !existingIds.has(r.id));
                 return [...results, ...prevMovies.filter(pm => !results.some(r => r.id === pm.id))];
             });
+            // After a successful search that adds a movie, refetch all movies
+            // to ensure the genre list and main list are up to date.
+            const isNewMovie = results.some(r => !moviesToDisplay.some(m => m.id === r.id));
+            if (isNewMovie) {
+                fetchAllMovies(null);
+            }
+
         } else {
             toast({
                 title: 'Search Result',
@@ -101,33 +108,42 @@ export default function Home() {
     } finally {
         setIsSearching(false);
     }
-}, [toast, fetchAllMovies, selectedGenre]);
+}, [toast, fetchAllMovies, selectedGenre, moviesToDisplay]);
 
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
       if (searchTerm) {
         handleSearch(searchTerm);
-      } else {
+      } else if (!isFetchingInitialMovies) { // Avoid refetching if initial load isn't done
         fetchAllMovies(selectedGenre);
       }
     }, 500);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchTerm, handleSearch, selectedGenre, fetchAllMovies]);
+  }, [searchTerm, handleSearch, selectedGenre, fetchAllMovies, isFetchingInitialMovies]);
 
 
   const handleSelectMovie = useCallback((movie: Movie) => {
-    setSelectedMovies(prev => {
-      const newMap = new Map(prev);
-      if (newMap.has(movie.id)) {
-        newMap.delete(movie.id);
-      } else {
-        newMap.set(movie.id, movie.title);
-      }
-      return newMap;
-    });
-  }, []);
+    // Only allow selection if the movie is in the main displayed list
+    if (moviesToDisplay.find(m => m.id === movie.id)) {
+        setSelectedMovies(prev => {
+            const newMap = new Map(prev);
+            if (newMap.has(movie.id)) {
+                newMap.delete(movie.id);
+            } else {
+                newMap.set(movie.id, movie.title);
+            }
+            return newMap;
+        });
+    } else {
+        toast({
+            title: "Movie Not Ready",
+            description: "This movie is being added to the library. Please wait a moment and try again.",
+            variant: "default"
+        })
+    }
+  }, [moviesToDisplay, toast]);
   
   const handleGetRecommendations = async () => {
     if (selectedMovies.size === 0) {
@@ -315,8 +331,11 @@ export default function Home() {
                 </div>
               </div>
               {isFetchingInitialMovies ? (
-                <div className="flex justify-center items-center h-64">
+                <div className="flex flex-col justify-center items-center h-64 space-y-4">
                   <LoaderCircle className="h-16 w-16 animate-spin text-primary" />
+                  <p className="text-muted-foreground font-medium text-center">
+                    Waking up the movie database...<br />This may take up to a minute on the first load.
+                  </p>
                 </div>
               ) : (
                 moviesToDisplay.length > 0 ? (
@@ -384,3 +403,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
