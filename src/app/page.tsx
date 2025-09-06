@@ -117,6 +117,15 @@ export default function Home() {
 
 
  const handleSelectMovie = useCallback(async (movieId: string) => {
+    // Only allow selection if the movie is in the main list
+    if (!moviesToDisplay.some(m => m.id === movieId)) {
+        toast({
+            title: "Selection Error",
+            description: "Please wait until the movie is fully loaded before selecting.",
+            variant: "destructive"
+        });
+        return;
+    }
     setSelectedMovies(prev => {
       if (prev.includes(movieId)) {
         return prev.filter(id => id !== movieId);
@@ -124,7 +133,7 @@ export default function Home() {
         return [...prev, movieId];
       }
     });
-  }, []);
+  }, [moviesToDisplay, toast]);
   
   const handleGetRecommendations = async () => {
     if (selectedMovies.length === 0) {
@@ -395,3 +404,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
