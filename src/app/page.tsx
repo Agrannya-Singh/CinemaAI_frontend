@@ -142,7 +142,8 @@ export default function Home() {
         });
 
         if (!response.ok) {
-           throw new Error('Failed to fetch recommendations');
+           const errorData = await response.json();
+           throw new Error(errorData.details || 'Failed to fetch recommendations');
         }
 
         const recommendedApiMovies: ApiMovie[] = await response.json();
@@ -156,9 +157,10 @@ export default function Home() {
         document.getElementById('recommendations-section')?.scrollIntoView({ behavior: 'smooth' });
       } catch (error) {
         console.error('Error getting recommendations:', error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         toast({
-          title: 'Error',
-          description: 'Failed to get recommendations. Please try again.',
+          title: 'Error Getting Recommendations',
+          description: errorMessage,
           variant: 'destructive',
         });
       }
