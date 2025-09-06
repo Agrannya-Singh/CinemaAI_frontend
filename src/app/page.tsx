@@ -2,11 +2,11 @@
 'use client';
 
 import { useState, useMemo, useCallback, useTransition, useEffect } from 'react';
-import { Movie, getMovies, searchMovies, transformApiMovie, getMoviesByIds } from '@/lib/movies';
+import { Movie, getMovies, searchMovies, transformApiMovie } from '@/lib/movies';
 import { MovieCard } from '@/components/movie-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Film, LoaderCircle, Download, Clapperboard } from 'lucide-react';
@@ -21,13 +21,11 @@ export default function Home() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
+  const [selectedMovies, setSelectedMovies] = useState<Map<string, string>>(new Map()); // Map of ID to Title
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
   const [isPending, startTransition] = useTransition();
   const [genres, setGenres] = useState<string[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
-  
-  const [selectedMovieDetails, setSelectedMovieDetails] = useState<Movie[]>([]);
 
   const fetchAllMovies = useCallback(async (selectGenre: string | null = selectedGenre) => {
     setIsFetchingInitialMovies(true);
@@ -44,12 +42,11 @@ export default function Home() {
         });
         setGenres(Array.from(uniqueGenres).sort());
         
+        let moviesToShow = fetchedMovies;
         if (selectGenre) {
-          const filtered = fetchedMovies.filter(m => m.genre.toLowerCase().includes(selectGenre.toLowerCase()));
-          setMoviesToDisplay(filtered);
-        } else {
-          setMoviesToDisplay(fetchedMovies);
+          moviesToShow = fetchedMovies.filter(m => m.genre.toLowerCase().includes(selectGenre.toLowerCase()));
         }
+        setMoviesToDisplay(moviesToShow);
 
     } catch (error) {
         console.error("Failed to fetch movies:", error);
@@ -65,30 +62,32 @@ export default function Home() {
 
   useEffect(() => {
     fetchAllMovies();
-  }, [fetchAllMovies]);
+  }, []);
 
  const handleSearch = useCallback(async (query: string) => {
     const trimmedQuery = query.trim();
     if (trimmedQuery.length === 0) {
-        fetchAllMovies(null); // Reset to all movies if search is cleared
+        fetchAllMovies(null);
         return;
     }
     
     setIsSearching(true);
     try {
         const results = await searchMovies(trimmedQuery);
-        // After searching, we display the result but also refresh the main list
-        // in case a new movie was added to the backend DB.
-        fetchAllMovies(); 
         
         if (results.length > 0) {
-            setMoviesToDisplay(results);
+            // Add new movies to the display list if they aren't already there
+            setMoviesToDisplay(prevMovies => {
+                const existingIds = new Set(prevMovies.map(m => m.id));
+                const newMovies = results.filter(r => !existingIds.has(r.id));
+                return [...results, ...prevMovies.filter(pm => !results.some(r => r.id === pm.id))];
+            });
         } else {
             toast({
                 title: 'Search Result',
                 description: 'Movie not found.',
             });
-            fetchAllMovies(selectedGenre); // Go back to the previous view
+            fetchAllMovies(selectedGenre); 
         }
         setSelectedGenre(null); 
         
@@ -110,7 +109,6 @@ export default function Home() {
       if (searchTerm) {
         handleSearch(searchTerm);
       } else {
-        // If search is cleared, fetch all movies based on the current genre
         fetchAllMovies(selectedGenre);
       }
     }, 500);
@@ -119,18 +117,20 @@ export default function Home() {
   }, [searchTerm, handleSearch, selectedGenre, fetchAllMovies]);
 
 
- const handleSelectMovie = useCallback((movieId: string) => {
+  const handleSelectMovie = useCallback((movie: Movie) => {
     setSelectedMovies(prev => {
-      if (prev.includes(movieId)) {
-        return prev.filter(id => id !== movieId);
+      const newMap = new Map(prev);
+      if (newMap.has(movie.id)) {
+        newMap.delete(movie.id);
       } else {
-        return [...prev, movieId];
+        newMap.set(movie.id, movie.title);
       }
+      return newMap;
     });
   }, []);
   
   const handleGetRecommendations = async () => {
-    if (selectedMovies.length === 0) {
+    if (selectedMovies.size === 0) {
       toast({
         title: 'Selection Incomplete',
         description: 'Please select at least one movie to get recommendations.',
@@ -142,7 +142,7 @@ export default function Home() {
     startTransition(async () => {
       try {
         const requestBody = {
-          movie_ids: selectedMovies,
+          movie_ids: Array.from(selectedMovies.keys()),
           num_recommendations: 10,
         };
         
@@ -163,7 +163,7 @@ export default function Home() {
         const recommendedMovieData = recommendedApiMovies
           .map(transformApiMovie)
           .filter((movie): movie is Movie => movie !== null)
-          .filter(movie => !selectedMovies.includes(movie.id));
+          .filter(movie => !selectedMovies.has(movie.id));
 
 
         setRecommendations(recommendedMovieData);
@@ -179,20 +179,6 @@ export default function Home() {
       }
     });
   };
-
-  useEffect(() => {
-    const fetchSelectedMovieDetails = async () => {
-      if (selectedMovies.length === 0) {
-        setSelectedMovieDetails([]);
-        return;
-      }
-      
-      const details = await getMoviesByIds(selectedMovies);
-      setSelectedMovieDetails(details);
-    };
-
-    fetchSelectedMovieDetails();
-  }, [selectedMovies]);
 
   const handleDownloadRecommendations = () => {
     if (recommendations.length === 0) {
@@ -272,13 +258,13 @@ export default function Home() {
 
                 <div className="space-y-4">
                     <h2 className="text-2xl font-bold text-primary">
-                        2. Your Selections ({selectedMovies.length})
+                        2. Your Selections ({selectedMovies.size})
                     </h2>
                      <ScrollArea className="h-40 rounded-md border border-border bg-secondary p-2">
-                        {selectedMovieDetails.length > 0 ? (
+                        {selectedMovies.size > 0 ? (
                         <ul className="space-y-2">
-                            {selectedMovieDetails.map(movie => (
-                            <li key={movie.id} className="text-sm text-foreground font-medium p-2 bg-background/50 rounded-md">{movie.title}</li>
+                            {Array.from(selectedMovies.entries()).map(([id, title]) => (
+                            <li key={id} className="text-sm text-foreground font-medium p-2 bg-background/50 rounded-md">{title}</li>
                             ))}
                         </ul>
                         ) : (
@@ -291,7 +277,7 @@ export default function Home() {
                         size="lg" 
                         className="w-full font-bold bg-primary hover:bg-primary/80 text-primary-foreground text-lg"
                         onClick={handleGetRecommendations}
-                        disabled={isPending || selectedMovies.length === 0}
+                        disabled={isPending || selectedMovies.size === 0}
                         >
                         {isPending && <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />}
                         Get AI Recommendations
@@ -339,8 +325,8 @@ export default function Home() {
                       <MovieCard
                         key={movie.id}
                         movie={movie}
-                        isSelected={selectedMovies.includes(movie.id)}
-                        onSelect={handleSelectMovie}
+                        isSelected={selectedMovies.has(movie.id)}
+                        onSelect={() => handleSelectMovie(movie)}
                       />
                     ))}
                   </div>

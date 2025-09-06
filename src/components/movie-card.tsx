@@ -17,7 +17,7 @@ import {
 interface MovieCardProps {
   movie: Movie;
   isSelected: boolean;
-  onSelect: (id: string) => void;
+  onSelect: (movie: Movie) => void;
 }
 
 export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
@@ -43,7 +43,7 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
       <Tooltip>
         <TooltipTrigger asChild>
           <Card
-            onClick={() => onSelect(movie.id)}
+            onClick={() => onSelect(movie)}
             className={cn(
               'cursor-pointer group overflow-hidden relative transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/20 bg-card border-border',
               isSelected ? 'ring-2 ring-primary ring-offset-4 ring-offset-background' : 'hover:ring-2 hover:ring-primary/50'
@@ -80,7 +80,7 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
                       <p>{movie.year}</p>
                       <div className="flex items-center gap-1">
                           <Star className="w-3 h-3 text-yellow-400" />
-                          <span>{movie.rating.toFixed(1)}</span>
+                          <span>{movie.rating ? movie.rating.toFixed(1) : 'N/A'}</span>
                       </div>
                   </div>
                 </div>
