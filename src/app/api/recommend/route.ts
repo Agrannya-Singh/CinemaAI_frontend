@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import type { ApiMovie } from '@/lib/movies';
 
@@ -19,12 +20,20 @@ function filterMovies(movies: ApiMovie[]): ApiMovie[] {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const { movie_ids, num_recommendations, genres } = body;
+    
+    const backendRequestBody = {
+        movie_ids,
+        num_recommendations,
+        genres: genres || [],
+    };
+
     const response = await fetch(`${API_BASE_URL}/recommend`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(backendRequestBody),
     });
 
     if (!response.ok) {
@@ -41,3 +50,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+    

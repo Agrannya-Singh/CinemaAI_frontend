@@ -127,15 +127,18 @@ export default function Home() {
 
     startTransition(async () => {
       try {
+        const requestBody = {
+          movie_ids: selectedMovies,
+          num_recommendations: 10,
+          genres: selectedGenre ? [selectedGenre] : [],
+        };
+        
         const response = await fetch('/api/recommend', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            movie_ids: selectedMovies,
-            num_recommendations: 10,
-          }),
+          body: JSON.stringify(requestBody),
         });
 
         if (!response.ok) {
@@ -385,5 +388,7 @@ export default function Home() {
     </div>
   );
 }
+
+    
 
     
