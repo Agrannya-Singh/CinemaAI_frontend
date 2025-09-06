@@ -364,6 +364,9 @@ export default function Home() {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-3xl font-bold text-foreground">
                   Your AI Recommendations
+                  {recommendations.length > 0 && !isPending && (
+                    <Badge variant="secondary" className="ml-3 text-lg">{recommendations.length}</Badge>
+                  )}
               </h2>
               {recommendations.length > 0 && (
                 <Button onClick={handleDownloadRecommendations} variant="outline" size="sm" className="bg-secondary hover:bg-border">
