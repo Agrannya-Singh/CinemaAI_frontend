@@ -1,7 +1,5 @@
 
 'use client';
-import { OMDbMovie } from './omdb-api';
-
 
 export interface Movie {
   id: string; 
@@ -69,40 +67,12 @@ export async function searchMovies(identifier: string): Promise<Movie[]> {
       return [];
     }
     const data: ApiMovie[] = await response.json();
-    return data.map(transformApiMovie).filter((movie): movie is Movie => movie !== null);
+    // The backend search endpoint for a single movie returns an object, not an array.
+    // We wrap it to handle both cases gracefully.
+    const moviesArray = Array.isArray(data) ? data : [data];
+    return moviesArray.map(transformApiMovie).filter((movie): movie is Movie => movie !== null);
   } catch (error) {
     console.error('Error in searchMovies:', error);
     return [];
   }
-}
-
-
-// We need a way to get movie details for the selected movies.
-// The API doesn't have a getByIds endpoint, so we will filter the main list.
-export async function getMoviesByIds(ids: string[], allMovies: Movie[]): Promise<Movie[]> {
-  if (ids.length === 0) {
-    return [];
-  }
-  try {
-    const selected = allMovies.filter(movie => ids.includes(movie.id));
-    return selected;
-  } catch (error) {
-    console.error('Error in getMoviesByIds:', error);
-    return [];
-  }
-}
-
-export function getGenres(movies: Movie[]): string[] {
-    const allGenres = new Set<string>();
-    movies.forEach(movie => {
-        if (movie.genre) {
-            movie.genre.split(',').forEach(genre => {
-                const trimmedGenre = genre.trim();
-                if (trimmedGenre) {
-                    allGenres.add(trimmedGenre.toLowerCase());
-                }
-            });
-        }
-    });
-    return Array.from(allGenres).sort();
 }

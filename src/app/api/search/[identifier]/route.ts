@@ -1,48 +1,34 @@
+
 import { NextResponse } from 'next/server';
-import { OMDbMovie, OMDbSearchResult } from '@/lib/omdb-api';
 
-const OMDB_API_URL = `http://www.omdbapi.com/?apikey=${process.env.OMDB_API_KEY}`;
+const API_BASE_URL = 'https://cinemaai-backend.onrender.com';
 
-
-function transformOMDbMovieToApiMovie(omdbMovie: OMDbMovie) {
-    return {
-        id: omdbMovie.imdbID,
-        title: omdbMovie.Title,
-        overview: omdbMovie.Plot,
-        genres: omdbMovie.Genre,
-        cast: omdbMovie.Actors,
-        poster_path: omdbMovie.Poster,
-        vote_average: parseFloat(omdbMovie.imdbRating),
-        release_date: omdbMovie.Year,
-    };
-}
-
-
+// This route now proxies search requests to the backend.
 export async function GET(
   request: Request,
   { params }: { params: { identifier: string } }
 ) {
   const identifier = params.identifier;
   try {
-    const response = await fetch(`${OMDB_API_URL}&t=${encodeURIComponent(identifier)}`);
-    const data: OMDbMovie = await response.json();
+    const response = await fetch(`${API_BASE_URL}/search/${encodeURIComponent(identifier)}`);
     
-    if (data.Response === 'True') {
-      const movie = transformOMDbMovieToApiMovie(data);
-      return NextResponse.json([movie]);
-    } else {
-      // If search by title fails, try searching as an ID
-      const byIdResponse = await fetch(`${OMDB_API_URL}&i=${encodeURIComponent(identifier)}`);
-      const byIdData: OMDbMovie = await byIdResponse.json();
-      if (byIdData.Response === 'True') {
-          const movie = transformOMDbMovieToApiMovie(byIdData);
-          return NextResponse.json([movie]);
-      }
+    // The backend returns 404 if not found, which is fine. We'll forward that.
+    if (!response.ok) {
+        if (response.status === 404) {
+            return NextResponse.json([], { status: 200 }); // Return empty array for not found
+        }
+        const errorBody = await response.text();
+        console.error("Backend search failed:", errorBody);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
     
-    return NextResponse.json([], { status: 200 });
+    const movie = await response.json();
+    // The backend search endpoint returns a single movie object, not an array.
+    // We wrap it in an array to maintain consistency with the frontend's expectations.
+    return NextResponse.json([movie]);
+
   } catch (error) {
-    console.error("OMDb API search failed:", error);
+    console.error("Proxy to /api/search failed:", error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

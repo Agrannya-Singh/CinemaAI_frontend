@@ -2,11 +2,11 @@
 'use client';
 
 import { useState, useMemo, useCallback, useTransition, useEffect } from 'react';
-import { Movie, getMovies, getMoviesByIds, searchMovies, transformApiMovie, getGenres } from '@/lib/movies';
+import { Movie, getMovies, searchMovies, transformApiMovie } from '@/lib/movies';
 import { MovieCard } from '@/components/movie-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Film, LoaderCircle, Download, Clapperboard } from 'lucide-react';
@@ -16,27 +16,36 @@ import { Badge } from '@/components/ui/badge';
 export default function Home() {
   const { toast } = useToast();
   
-  const [allMovies, setAllMovies] = useState<Movie[]>([]);
   const [moviesToDisplay, setMoviesToDisplay] = useState<Movie[]>([]);
-  const [isFetchingInitialMovies, setIsFetchingInitialMovies] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
+  const [selectedMovies, setSelectedMovies] = useState<Map<string, string>>(new Map()); // Map of ID to Title
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
   const [isPending, startTransition] = useTransition();
   const [genres, setGenres] = useState<string[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
 
-  const fetchAllMovies = useCallback(async () => {
-    setIsFetchingInitialMovies(true);
+  const fetchAllMovies = useCallback(async (selectGenre: string | null = selectedGenre) => {
     try {
-        const movies = await getMovies();
-        setAllMovies(movies);
-        if (!selectedGenre) {
-          setMoviesToDisplay(movies);
+        const fetchedMovies = await getMovies();
+        const uniqueGenres = new Set<string>();
+        fetchedMovies.forEach(movie => {
+            if (movie.genre) {
+                movie.genre.split(',').forEach(g => {
+                    const trimmed = g.trim().toLowerCase();
+                    if (trimmed) uniqueGenres.add(trimmed);
+                });
+            }
+        });
+        setGenres(Array.from(uniqueGenres).sort());
+        
+        let moviesToShow = fetchedMovies;
+        if (selectGenre) {
+          moviesToShow = fetchedMovies.filter(m => m.genre.toLowerCase().includes(selectGenre.toLowerCase()));
         }
-        setGenres(getGenres(movies));
+        setMoviesToDisplay(moviesToShow);
+
     } catch (error) {
         console.error("Failed to fetch movies:", error);
         toast({
@@ -44,33 +53,30 @@ export default function Home() {
             description: 'Could not fetch movies. Please try refreshing the page.',
             variant: 'destructive',
         });
-    } finally {
-        setIsFetchingInitialMovies(false);
     }
   }, [toast, selectedGenre]);
 
   useEffect(() => {
     fetchAllMovies();
-  }, [fetchAllMovies]);
+  }, []);
 
  const handleSearch = useCallback(async (query: string) => {
     const trimmedQuery = query.trim();
     if (trimmedQuery.length === 0) {
-        setMoviesToDisplay(allMovies);
+        fetchAllMovies(null);
         return;
     }
     
     setIsSearching(true);
     try {
         const results = await searchMovies(trimmedQuery);
-        setMoviesToDisplay(results);
-        setSelectedGenre(null); 
         
         if (results.length > 0) {
-            // Add new search results to the main list if they aren't there already
-            setAllMovies(prevMovies => {
+            // Add new movies to the display list if they aren't already there
+            setMoviesToDisplay(prevMovies => {
                 const existingIds = new Set(prevMovies.map(m => m.id));
-                const newMovies = results.filter(m => !existingIds.has(m.id));
+                const newMovies = results.filter(r => !existingIds.has(r.id));
+                // Append new movies to the end to avoid layout shifts
                 return [...prevMovies, ...newMovies];
             });
         } else {
@@ -78,7 +84,10 @@ export default function Home() {
                 title: 'Search Result',
                 description: 'Movie not found.',
             });
+            fetchAllMovies(selectedGenre); 
         }
+        setSelectedGenre(null); 
+        
     } catch (error) {
         console.error("Search failed:", error);
         toast({
@@ -89,7 +98,7 @@ export default function Home() {
     } finally {
         setIsSearching(false);
     }
-}, [allMovies, toast]);
+}, [toast, fetchAllMovies, selectedGenre]);
 
 
   useEffect(() => {
@@ -97,26 +106,28 @@ export default function Home() {
       if (searchTerm) {
         handleSearch(searchTerm);
       } else {
-        if (!selectedGenre) {
-          setMoviesToDisplay(allMovies);
-        }
+        fetchAllMovies(selectedGenre);
       }
     }, 500);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchTerm, handleSearch, allMovies, selectedGenre]);
+  }, [searchTerm, handleSearch, selectedGenre, fetchAllMovies]);
 
 
-  const handleSelectMovie = useCallback((movieId: string) => {
-    setSelectedMovies((prev) =>
-      prev.includes(movieId)
-        ? prev.filter((id) => id !== movieId)
-        : [...prev, movieId]
-    );
+  const handleSelectMovie = useCallback((movie: Movie) => {
+    setSelectedMovies(prev => {
+        const newMap = new Map(prev);
+        if (newMap.has(movie.id)) {
+            newMap.delete(movie.id);
+        } else {
+            newMap.set(movie.id, movie.title);
+        }
+        return newMap;
+    });
   }, []);
   
   const handleGetRecommendations = async () => {
-    if (selectedMovies.length === 0) {
+    if (selectedMovies.size === 0) {
       toast({
         title: 'Selection Incomplete',
         description: 'Please select at least one movie to get recommendations.',
@@ -127,54 +138,44 @@ export default function Home() {
 
     startTransition(async () => {
       try {
+        const requestBody = {
+          movie_ids: Array.from(selectedMovies.keys()),
+          num_recommendations: 10,
+        };
+        
         const response = await fetch('/api/recommend', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            movie_ids: selectedMovies,
-            num_recommendations: 10,
-          }),
+          body: JSON.stringify(requestBody),
         });
 
         if (!response.ok) {
-           throw new Error('Failed to fetch recommendations');
+           const errorData = await response.json();
+           throw new Error(errorData.detail || 'Failed to fetch recommendations');
         }
 
         const recommendedApiMovies: ApiMovie[] = await response.json();
         const recommendedMovieData = recommendedApiMovies
           .map(transformApiMovie)
           .filter((movie): movie is Movie => movie !== null)
-          .filter(movie => !selectedMovies.includes(movie.id));
+          .filter(movie => !selectedMovies.has(movie.id));
 
 
         setRecommendations(recommendedMovieData);
         document.getElementById('recommendations-section')?.scrollIntoView({ behavior: 'smooth' });
       } catch (error) {
         console.error('Error getting recommendations:', error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         toast({
-          title: 'Error',
-          description: 'Failed to get recommendations. Please try again.',
+          title: 'Error Getting Recommendations',
+          description: errorMessage,
           variant: 'destructive',
         });
       }
     });
   };
-
-  const [selectedMovieDetails, setSelectedMovieDetails] = useState<Movie[]>([]);
-  
-  useEffect(() => {
-    const fetchSelectedMovieDetails = async () => {
-      if (selectedMovies.length > 0) {
-        const details = await getMoviesByIds(selectedMovies, allMovies);
-        setSelectedMovieDetails(details);
-      } else {
-        setSelectedMovieDetails([]);
-      }
-    };
-    fetchSelectedMovieDetails();
-  }, [selectedMovies, allMovies]);
 
   const handleDownloadRecommendations = () => {
     if (recommendations.length === 0) {
@@ -201,12 +202,7 @@ export default function Home() {
   const handleGenreSelect = (genre: string | null) => {
     setSelectedGenre(genre);
     setSearchTerm(''); 
-    if (genre) {
-      const filteredMovies = allMovies.filter(movie => movie.genre.toLowerCase().includes(genre.toLowerCase()));
-      setMoviesToDisplay(filteredMovies);
-    } else {
-      setMoviesToDisplay(allMovies);
-    }
+    fetchAllMovies(genre);
   };
   
   const filteredMoviesHeader = useMemo(() => {
@@ -259,13 +255,13 @@ export default function Home() {
 
                 <div className="space-y-4">
                     <h2 className="text-2xl font-bold text-primary">
-                        2. Your Selections ({selectedMovies.length})
+                        2. Your Selections ({selectedMovies.size})
                     </h2>
                      <ScrollArea className="h-40 rounded-md border border-border bg-secondary p-2">
-                        {selectedMovieDetails.length > 0 ? (
+                        {selectedMovies.size > 0 ? (
                         <ul className="space-y-2">
-                            {selectedMovieDetails.map(movie => (
-                            <li key={movie.id} className="text-sm text-foreground font-medium p-2 bg-background/50 rounded-md">{movie.title}</li>
+                            {Array.from(selectedMovies.entries()).map(([id, title]) => (
+                            <li key={id} className="text-sm text-foreground font-medium p-2 bg-background/50 rounded-md">{title}</li>
                             ))}
                         </ul>
                         ) : (
@@ -278,7 +274,7 @@ export default function Home() {
                         size="lg" 
                         className="w-full font-bold bg-primary hover:bg-primary/80 text-primary-foreground text-lg"
                         onClick={handleGetRecommendations}
-                        disabled={isPending || selectedMovies.length === 0}
+                        disabled={isPending || selectedMovies.size === 0}
                         >
                         {isPending && <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />}
                         Get AI Recommendations
@@ -315,30 +311,23 @@ export default function Home() {
                   ))}
                 </div>
               </div>
-              {isFetchingInitialMovies ? (
-                <div className="flex justify-center items-center h-64">
-                  <LoaderCircle className="h-16 w-16 animate-spin text-primary" />
-                </div>
-              ) : (
-                moviesToDisplay.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                    {moviesToDisplay.map((movie) => (
-                      <MovieCard
-                        key={movie.id}
-                        movie={movie}
-                        isSelected={selectedMovies.includes(movie.id)}
-                        onSelect={handleSelectMovie}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <Card className="flex flex-col items-center justify-center text-center p-8 h-64 bg-card border-dashed border-border">
-                    <Film className="h-16 w-16 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground font-medium">
-                      {searchTerm ? 'No movies found for your search.' : (selectedGenre ? `No movies found in the ${selectedGenre} genre.` : 'No movies available.')}
-                    </p>
-                  </Card>
-                )
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                {moviesToDisplay.map((movie) => (
+                  <MovieCard
+                    key={movie.id}
+                    movie={movie}
+                    isSelected={selectedMovies.has(movie.id)}
+                    onSelect={() => handleSelectMovie(movie)}
+                  />
+                ))}
+              </div>
+              {moviesToDisplay.length === 0 && !isSearching && (
+                <Card className="flex flex-col items-center justify-center text-center p-8 h-64 bg-card border-dashed border-border">
+                  <Film className="h-16 w-16 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground font-medium">
+                    {searchTerm ? 'No movies found for your search.' : (selectedGenre ? `No movies found in the ${selectedGenre} genre.` : 'No movies available.')}
+                  </p>
+                </Card>
               )}
         </section>
         
@@ -346,6 +335,9 @@ export default function Home() {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-3xl font-bold text-foreground">
                   Your AI Recommendations
+                  {recommendations.length > 0 && !isPending && (
+                    <Badge variant="secondary" className="ml-3 text-lg">{recommendations.length}</Badge>
+                  )}
               </h2>
               {recommendations.length > 0 && (
                 <Button onClick={handleDownloadRecommendations} variant="outline" size="sm" className="bg-secondary hover:bg-border">
@@ -385,5 +377,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
