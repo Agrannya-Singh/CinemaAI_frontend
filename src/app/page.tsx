@@ -26,6 +26,17 @@ export default function Home() {
   const [genres, setGenres] = useState<string[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
 
+  const getUniqueMovies = (movies: Movie[]): Movie[] => {
+    const uniqueIds = new Set<string>();
+    return movies.filter(movie => {
+        if (uniqueIds.has(movie.id)) {
+            return false;
+        }
+        uniqueIds.add(movie.id);
+        return true;
+    });
+  };
+
   const fetchAllMovies = useCallback(async (selectGenre: string | null = selectedGenre) => {
     try {
         const fetchedMovies = await getMovies();
@@ -44,7 +55,7 @@ export default function Home() {
         if (selectGenre) {
           moviesToShow = fetchedMovies.filter(m => m.genre.toLowerCase().includes(selectGenre.toLowerCase()));
         }
-        setMoviesToDisplay(moviesToShow);
+        setMoviesToDisplay(getUniqueMovies(moviesToShow));
 
     } catch (error) {
         console.error("Failed to fetch movies:", error);
@@ -72,12 +83,10 @@ export default function Home() {
         const results = await searchMovies(trimmedQuery);
         
         if (results.length > 0) {
-            // Add new movies to the display list if they aren't already there
             setMoviesToDisplay(prevMovies => {
                 const existingIds = new Set(prevMovies.map(m => m.id));
                 const newMovies = results.filter(r => !existingIds.has(r.id));
-                // Append new movies to the end to avoid layout shifts
-                return [...prevMovies, ...newMovies];
+                return getUniqueMovies([...prevMovies, ...newMovies]);
             });
         } else {
             toast({
