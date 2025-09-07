@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useCallback, useTransition, useEffect } from 'react';
+import { useState, useMemo, useCallback, useTransition, useEffect, useRef } from 'react';
 import { Movie, getMovies, searchMovies, transformApiMovie } from '@/lib/movies';
 import { MovieCard } from '@/components/movie-card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Film, LoaderCircle, Download, Clapperboard } from 'lucide-react';
 import type { ApiMovie } from '@/lib/movies';
+import Autoplay from "embla-carousel-autoplay"
 import {
   Carousel,
   CarouselContent,
@@ -35,6 +36,10 @@ export default function Home() {
   const [selectedMovies, setSelectedMovies] = useState<Map<string, string>>(new Map()); // Map of ID to Title
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
   const [isPending, startTransition] = useTransition();
+
+  const plugin = useRef(
+    Autoplay({ delay: 2000, stopOnInteraction: true })
+  )
 
   const getUniqueMovies = (movies: Movie[]): Movie[] => {
     const uniqueIds = new Set<string>();
@@ -93,7 +98,17 @@ export default function Home() {
     setIsSearching(true);
     try {
         const results = await searchMovies(trimmedQuery);
-        setSearchResults(results);
+        const newMovies = results.filter(
+          (movie) => !allMovies.some((m) => m.id === movie.id)
+        );
+
+        if (newMovies.length > 0) {
+          setAllMovies((prevMovies) => getUniqueMovies([...prevMovies, ...newMovies]));
+          setSearchResults(newMovies);
+        } else {
+          setSearchResults(results.length > 0 ? results : []);
+        }
+
         if (results.length === 0) {
             toast({
                 title: 'Search Result',
@@ -111,7 +126,7 @@ export default function Home() {
     } finally {
         setIsSearching(false);
     }
-  }, [toast]);
+  }, [toast, allMovies]);
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
@@ -289,11 +304,14 @@ export default function Home() {
               <div key={genre}>
                 <h2 className="text-2xl font-bold text-foreground mb-4">{genre}</h2>
                 <Carousel
+                  plugins={[plugin.current]}
                   opts={{
                     align: "start",
                     loop: movies.length > 5,
                   }}
                   className="w-full"
+                  onMouseEnter={plugin.current.stop}
+                  onMouseLeave={plugin.current.reset}
                 >
                   <CarouselContent>
                     {movies.map((movie) => (
@@ -338,11 +356,14 @@ export default function Home() {
                 </div>
             ) : recommendations.length > 0 ? (
                  <Carousel
+                  plugins={[plugin.current]}
                   opts={{
                     align: "start",
                     loop: recommendations.length > 5,
                   }}
                   className="w-full"
+                  onMouseEnter={plugin.current.stop}
+                  onMouseLeave={plugin.current.reset}
                 >
                   <CarouselContent>
                     {recommendations.map((movie) => (
