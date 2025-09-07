@@ -19,6 +19,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 type GroupedMovies = {
   [genre: string]: Movie[];
@@ -232,166 +233,168 @@ export default function Home() {
   }, [searchTerm, searchResults, groupedMovies]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
-       <header className="sticky top-0 z-20 w-full bg-gradient-to-b from-background to-transparent">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20">
-            <div className="flex items-center space-x-4">
-                <Clapperboard className="h-10 w-10 text-primary" />
-                <h1 className="text-3xl md:text-4xl font-bold tracking-tighter">
-                    ScreenScout
-                </h1>
-            </div>
-        </div>
-      </header>
-
-      <main className="flex-1 container mx-auto p-4 sm:p-6 lg:p-8 space-y-16">
-        <section className="bg-card border border-border rounded-lg p-6 md:p-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                <div className="space-y-4">
-                    <h2 className="text-2xl font-bold text-primary">
-                        1. Select Your Favorite Movies
-                    </h2>
-                    <p className="text-muted-foreground">
-                        Search for movies you love and add them to your list. The more you add, the better the recommendations.
-                    </p>
-                    <div className="relative">
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground">
-                            {isSearching ? <LoaderCircle className="animate-spin text-primary" /> : <Search />}
-                        </div>
-                        <Input
-                            type="text"
-                            placeholder="Search for any movie..."
-                            className="pl-10 text-base bg-secondary border-border focus:ring-primary"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                </div>
-
-                <div className="space-y-4">
-                    <h2 className="text-2xl font-bold text-primary">
-                        2. Your Selections ({selectedMovies.size})
-                    </h2>
-                     <ScrollArea className="h-40 rounded-md border border-border bg-secondary p-2">
-                        {selectedMovies.size > 0 ? (
-                        <ul className="space-y-2">
-                            {Array.from(selectedMovies.entries()).map(([id, title]) => (
-                            <li key={id} className="text-sm text-foreground font-medium p-2 bg-background/50 rounded-md">{title}</li>
-                            ))}
-                        </ul>
-                        ) : (
-                        <div className="flex items-center justify-center h-full">
-                            <p className="text-sm text-center text-muted-foreground">Selected movies will appear here.</p>
-                        </div>
-                        )}
-                    </ScrollArea>
-                     <Button 
-                        size="lg" 
-                        className="w-full font-bold bg-primary hover:bg-primary/80 text-primary-foreground text-lg"
-                        onClick={handleGetRecommendations}
-                        disabled={isPending || selectedMovies.size === 0}
-                        >
-                        {isPending && <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />}
-                        Get AI Recommendations
-                    </Button>
-                </div>
-            </div>
-        </section>
-        
-        <section className="space-y-8">
-          {Object.entries(movieListsToDisplay).map(([genre, movies]) => (
-            movies.length > 0 && (
-              <div key={genre}>
-                <h2 className="text-2xl font-bold text-foreground mb-4">{genre}</h2>
-                <Carousel
-                  plugins={[plugin.current]}
-                  opts={{
-                    align: "start",
-                    loop: movies.length > 5,
-                  }}
-                  className="w-full"
-                  onMouseEnter={plugin.current.stop}
-                  onMouseLeave={plugin.current.reset}
-                >
-                  <CarouselContent>
-                    {movies.map((movie) => (
-                      <CarouselItem key={movie.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
-                          <MovieCard
-                            movie={movie}
-                            isSelected={selectedMovies.has(movie.id)}
-                            onSelect={() => handleSelectMovie(movie)}
-                          />
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious />
-                  <CarouselNext />
-                </Carousel>
+    <TooltipProvider delayDuration={300}>
+      <div className="flex flex-col min-h-screen bg-background text-foreground">
+        <header className="sticky top-0 z-20 w-full bg-gradient-to-b from-background to-transparent">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20">
+              <div className="flex items-center space-x-4">
+                  <Clapperboard className="h-10 w-10 text-primary" />
+                  <h1 className="text-3xl md:text-4xl font-bold tracking-tighter">
+                      ScreenScout
+                  </h1>
               </div>
-            )
-          ))}
-          {allMovies.length === 0 && !isSearching && (
-             <Card className="flex flex-col items-center justify-center text-center p-8 h-64 bg-card border-dashed border-border">
-                <Film className="h-16 w-16 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground font-medium">No movies available. Try searching for one!</p>
-             </Card>
-          )}
-        </section>
-        
-        <section id="recommendations-section" className="space-y-8">
-            <div className="flex justify-between items-center">
-              <h2 className="text-3xl font-bold text-foreground">
-                  Your AI Recommendations
-              </h2>
-              {recommendations.length > 0 && (
-                <Button onClick={handleDownloadRecommendations} variant="outline" size="sm" className="bg-secondary hover:bg-border">
-                  <Download className="mr-2 h-4 w-4" />
-                  Download JSON
-                </Button>
-              )}
-            </div>
-            {isPending ? (
-                <div className="flex justify-center items-center h-64">
-                    <LoaderCircle className="h-16 w-16 animate-spin text-primary" />
-                </div>
-            ) : recommendations.length > 0 ? (
-                 <Carousel
-                  plugins={[plugin.current]}
-                  opts={{
-                    align: "start",
-                    loop: recommendations.length > 5,
-                  }}
-                  className="w-full"
-                  onMouseEnter={plugin.current.stop}
-                  onMouseLeave={plugin.current.reset}
-                >
-                  <CarouselContent>
-                    {recommendations.map((movie) => (
-                      <CarouselItem key={movie.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
-                          <MovieCard
-                            movie={movie}
-                            isSelected={false}
-                            onSelect={() => {}}
+          </div>
+        </header>
+
+        <main className="flex-1 container mx-auto p-4 sm:p-6 lg:p-8 space-y-16">
+          <section className="bg-card border border-border rounded-lg p-6 md:p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                  <div className="space-y-4">
+                      <h2 className="text-2xl font-bold text-primary">
+                          1. Select Your Favorite Movies
+                      </h2>
+                      <p className="text-muted-foreground">
+                          Search for movies you love and add them to your list. The more you add, the better the recommendations.
+                      </p>
+                      <div className="relative">
+                          <div className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground">
+                              {isSearching ? <LoaderCircle className="animate-spin text-primary" /> : <Search />}
+                          </div>
+                          <Input
+                              type="text"
+                              placeholder="Search for any movie..."
+                              className="pl-10 text-base bg-secondary border-border focus:ring-primary"
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
                           />
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious />
-                  <CarouselNext />
-                </Carousel>
-            ) : (
-                <Card className="flex flex-col items-center justify-center text-center p-8 h-64 bg-card border-dashed border-border">
-                    <Film className="h-16 w-16 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground font-medium">
-                        Your personalized movie recommendations will appear here.
-                    </p>
-                </Card>
+                      </div>
+                  </div>
+
+                  <div className="space-y-4">
+                      <h2 className="text-2xl font-bold text-primary">
+                          2. Your Selections ({selectedMovies.size})
+                      </h2>
+                      <ScrollArea className="h-40 rounded-md border border-border bg-secondary p-2">
+                          {selectedMovies.size > 0 ? (
+                          <ul className="space-y-2">
+                              {Array.from(selectedMovies.entries()).map(([id, title]) => (
+                              <li key={id} className="text-sm text-foreground font-medium p-2 bg-background/50 rounded-md">{title}</li>
+                              ))}
+                          </ul>
+                          ) : (
+                          <div className="flex items-center justify-center h-full">
+                              <p className="text-sm text-center text-muted-foreground">Selected movies will appear here.</p>
+                          </div>
+                          )}
+                      </ScrollArea>
+                      <Button 
+                          size="lg" 
+                          className="w-full font-bold bg-primary hover:bg-primary/80 text-primary-foreground text-lg"
+                          onClick={handleGetRecommendations}
+                          disabled={isPending || selectedMovies.size === 0}
+                          >
+                          {isPending && <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />}
+                          Get AI Recommendations
+                      </Button>
+                  </div>
+              </div>
+          </section>
+          
+          <section className="space-y-8">
+            {Object.entries(movieListsToDisplay).map(([genre, movies]) => (
+              movies.length > 0 && (
+                <div key={genre}>
+                  <h2 className="text-2xl font-bold text-foreground mb-4">{genre}</h2>
+                  <Carousel
+                    plugins={[plugin.current]}
+                    opts={{
+                      align: "start",
+                      loop: movies.length > 5,
+                    }}
+                    className="w-full"
+                    onMouseEnter={plugin.current.stop}
+                    onMouseLeave={plugin.current.reset}
+                  >
+                    <CarouselContent>
+                      {movies.map((movie) => (
+                        <CarouselItem key={movie.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
+                            <MovieCard
+                              movie={movie}
+                              isSelected={selectedMovies.has(movie.id)}
+                              onSelect={() => handleSelectMovie(movie)}
+                            />
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious />
+                    <CarouselNext />
+                  </Carousel>
+                </div>
+              )
+            ))}
+            {allMovies.length === 0 && !isSearching && (
+              <Card className="flex flex-col items-center justify-center text-center p-8 h-64 bg-card border-dashed border-border">
+                  <Film className="h-16 w-16 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground font-medium">No movies available. Try searching for one!</p>
+              </Card>
             )}
-        </section>
-      </main>
-      <footer className="text-center p-6 text-muted-foreground border-t border-border mt-12">
-        Made with ❤️ by the ScreenScout Team
-      </footer>
-    </div>
+          </section>
+          
+          <section id="recommendations-section" className="space-y-8">
+              <div className="flex justify-between items-center">
+                <h2 className="text-3xl font-bold text-foreground">
+                    Your AI Recommendations
+                </h2>
+                {recommendations.length > 0 && (
+                  <Button onClick={handleDownloadRecommendations} variant="outline" size="sm" className="bg-secondary hover:bg-border">
+                    <Download className="mr-2 h-4 w-4" />
+                    Download JSON
+                  </Button>
+                )}
+              </div>
+              {isPending ? (
+                  <div className="flex justify-center items-center h-64">
+                      <LoaderCircle className="h-16 w-16 animate-spin text-primary" />
+                  </div>
+              ) : recommendations.length > 0 ? (
+                  <Carousel
+                    plugins={[plugin.current]}
+                    opts={{
+                      align: "start",
+                      loop: recommendations.length > 5,
+                    }}
+                    className="w-full"
+                    onMouseEnter={plugin.current.stop}
+                    onMouseLeave={plugin.current.reset}
+                  >
+                    <CarouselContent>
+                      {recommendations.map((movie) => (
+                        <CarouselItem key={movie.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
+                            <MovieCard
+                              movie={movie}
+                              isSelected={false}
+                              onSelect={() => {}}
+                            />
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious />
+                    <CarouselNext />
+                  </Carousel>
+              ) : (
+                  <Card className="flex flex-col items-center justify-center text-center p-8 h-64 bg-card border-dashed border-border">
+                      <Film className="h-16 w-16 text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground font-medium">
+                          Your personalized movie recommendations will appear here.
+                      </p>
+                  </Card>
+              )}
+          </section>
+        </main>
+        <footer className="text-center p-6 text-muted-foreground border-t border-border mt-12">
+          Made with ❤️ by the ScreenScout Team
+        </footer>
+      </div>
+    </TooltipProvider>
   );
 }
