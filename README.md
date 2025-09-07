@@ -1,6 +1,6 @@
-# CinemaAI: Your Personal Movie Recommendation Engine
+# ScreenScout: Your Personal Movie Recommendation Engine
 
-Welcome to CinemaAI! This is a Next.js web application designed to provide personalized movie recommendations based on your favorite films. You can search for movies, select the ones you like, and our AI-powered backend will suggest other movies you might enjoy.
+Welcome to ScreenScout! This is a Next.js web application designed to provide personalized movie recommendations based on your favorite films. You can search for movies, select the ones you like, and our AI-powered backend will suggest other movies you might enjoy.
 
 ## How it Works
 
@@ -8,9 +8,9 @@ The application is a standalone frontend built with Next.js and React. It commun
 
 The user flow is simple:
 1.  **Search & Select:** Find movies you like using the search bar.
-2.  **Choose Genres:** Pick one or more genres you're interested in.
+2.  **Browse Genres:** Explore movies sorted into horizontally scrolling carousels by genre.
 3.  **Build Your List:** Click on movie posters to add them to your selection list.
-4.  **Get Recommendations:** Click the "Generate Recommendations" button to receive a personalized list of movies.
+4.  **Get Recommendations:** Click the "Get AI Recommendations" button to receive a personalized list of movies.
 
 ## Tech Stack
 

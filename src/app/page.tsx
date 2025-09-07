@@ -11,20 +11,30 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Film, LoaderCircle, Download, Clapperboard } from 'lucide-react';
 import type { ApiMovie } from '@/lib/movies';
-import { Badge } from '@/components/ui/badge';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
+
+type GroupedMovies = {
+  [genre: string]: Movie[];
+}
 
 export default function Home() {
   const { toast } = useToast();
   
-  const [moviesToDisplay, setMoviesToDisplay] = useState<Movie[]>([]);
+  const [allMovies, setAllMovies] = useState<Movie[]>([]);
+  const [groupedMovies, setGroupedMovies] = useState<GroupedMovies>({});
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<Movie[]>([]);
   const [selectedMovies, setSelectedMovies] = useState<Map<string, string>>(new Map()); // Map of ID to Title
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
   const [isPending, startTransition] = useTransition();
-  const [genres, setGenres] = useState<string[]>([]);
-  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
 
   const getUniqueMovies = (movies: Movie[]): Movie[] => {
     const uniqueIds = new Set<string>();
@@ -37,25 +47,27 @@ export default function Home() {
     });
   };
 
-  const fetchAllMovies = useCallback(async (selectGenre: string | null = selectedGenre) => {
+  const fetchAllMovies = useCallback(async () => {
     try {
         const fetchedMovies = await getMovies();
-        const uniqueGenres = new Set<string>();
-        fetchedMovies.forEach(movie => {
-            if (movie.genre) {
-                movie.genre.split(',').forEach(g => {
-                    const trimmed = g.trim().toLowerCase();
-                    if (trimmed) uniqueGenres.add(trimmed);
-                });
-            }
+        const uniqueMovies = getUniqueMovies(fetchedMovies);
+        setAllMovies(uniqueMovies);
+
+        const genres: GroupedMovies = {};
+        uniqueMovies.forEach(movie => {
+          if (movie.genre) {
+            movie.genre.split(',').forEach(g => {
+              const trimmedGenre = g.trim();
+              if(trimmedGenre) {
+                if (!genres[trimmedGenre]) {
+                  genres[trimmedGenre] = [];
+                }
+                genres[trimmedGenre].push(movie);
+              }
+            });
+          }
         });
-        setGenres(Array.from(uniqueGenres).sort());
-        
-        let moviesToShow = fetchedMovies;
-        if (selectGenre) {
-          moviesToShow = fetchedMovies.filter(m => m.genre.toLowerCase().includes(selectGenre.toLowerCase()));
-        }
-        setMoviesToDisplay(getUniqueMovies(moviesToShow));
+        setGroupedMovies(genres);
 
     } catch (error) {
         console.error("Failed to fetch movies:", error);
@@ -65,37 +77,29 @@ export default function Home() {
             variant: 'destructive',
         });
     }
-  }, [toast, selectedGenre]);
+  }, [toast]);
 
   useEffect(() => {
     fetchAllMovies();
-  }, []);
+  }, [fetchAllMovies]);
 
- const handleSearch = useCallback(async (query: string) => {
+  const handleSearch = useCallback(async (query: string) => {
     const trimmedQuery = query.trim();
-    if (trimmedQuery.length === 0) {
-        fetchAllMovies(null);
-        return;
+    if (trimmedQuery.length < 2) {
+      setSearchResults([]);
+      return;
     }
     
     setIsSearching(true);
     try {
         const results = await searchMovies(trimmedQuery);
-        
-        if (results.length > 0) {
-            setMoviesToDisplay(prevMovies => {
-                const existingIds = new Set(prevMovies.map(m => m.id));
-                const newMovies = results.filter(r => !existingIds.has(r.id));
-                return getUniqueMovies([...prevMovies, ...newMovies]);
-            });
-        } else {
+        setSearchResults(results);
+        if (results.length === 0) {
             toast({
                 title: 'Search Result',
                 description: 'Movie not found.',
             });
-            fetchAllMovies(selectedGenre); 
         }
-        setSelectedGenre(null); 
         
     } catch (error) {
         console.error("Search failed:", error);
@@ -107,21 +111,19 @@ export default function Home() {
     } finally {
         setIsSearching(false);
     }
-}, [toast, fetchAllMovies, selectedGenre]);
-
+  }, [toast]);
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
       if (searchTerm) {
         handleSearch(searchTerm);
       } else {
-        fetchAllMovies(selectedGenre);
+        setSearchResults([]);
       }
     }, 500);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchTerm, handleSearch, selectedGenre, fetchAllMovies]);
-
+  }, [searchTerm, handleSearch]);
 
   const handleSelectMovie = useCallback((movie: Movie) => {
     setSelectedMovies(prev => {
@@ -171,7 +173,6 @@ export default function Home() {
           .filter((movie): movie is Movie => movie !== null)
           .filter(movie => !selectedMovies.has(movie.id));
 
-
         setRecommendations(recommendedMovieData);
         document.getElementById('recommendations-section')?.scrollIntoView({ behavior: 'smooth' });
       } catch (error) {
@@ -208,22 +209,12 @@ export default function Home() {
     URL.revokeObjectURL(url);
   };
   
-  const handleGenreSelect = (genre: string | null) => {
-    setSelectedGenre(genre);
-    setSearchTerm(''); 
-    fetchAllMovies(genre);
-  };
-  
-  const filteredMoviesHeader = useMemo(() => {
-    if (searchTerm.trim().length > 0 && !isSearching) {
-      return 'Search Results';
+  const movieListsToDisplay = useMemo(() => {
+    if (searchTerm.trim().length > 0) {
+      return { 'Search Results': searchResults };
     }
-    if (selectedGenre) {
-      return `Movies: ${selectedGenre.charAt(0).toUpperCase() + selectedGenre.slice(1)}`;
-    }
-    return 'All Available Movies';
-  }, [searchTerm, selectedGenre, isSearching]);
-
+    return groupedMovies;
+  }, [searchTerm, searchResults, groupedMovies]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -232,7 +223,7 @@ export default function Home() {
             <div className="flex items-center space-x-4">
                 <Clapperboard className="h-10 w-10 text-primary" />
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tighter">
-                    CinemaAI
+                    ScreenScout
                 </h1>
             </div>
         </div>
@@ -254,7 +245,7 @@ export default function Home() {
                         </div>
                         <Input
                             type="text"
-                            placeholder="Search for any movie to add it..."
+                            placeholder="Search for any movie..."
                             className="pl-10 text-base bg-secondary border-border focus:ring-primary"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -292,61 +283,47 @@ export default function Home() {
             </div>
         </section>
         
-        <section>
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-                <h2 className="text-3xl font-bold text-foreground mb-4 sm:mb-0">
-                  {filteredMoviesHeader}
-                  <Badge variant="secondary" className="ml-3 text-lg">{moviesToDisplay.length}</Badge>
-                </h2>
-                <div className="flex flex-wrap gap-2 justify-start sm:justify-end">
-                  <Button 
-                    variant={selectedGenre === null ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => handleGenreSelect(null)}
-                    className="font-semibold"
-                  >
-                    All Genres
-                  </Button>
-                  {genres.map(genre => (
-                    <Button 
-                      key={genre}
-                      variant={selectedGenre === genre ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handleGenreSelect(genre)}
-                      className="font-semibold capitalize"
-                    >
-                      {genre}
-                    </Button>
-                  ))}
-                </div>
+        <section className="space-y-8">
+          {Object.entries(movieListsToDisplay).map(([genre, movies]) => (
+            movies.length > 0 && (
+              <div key={genre}>
+                <h2 className="text-2xl font-bold text-foreground mb-4">{genre}</h2>
+                <Carousel
+                  opts={{
+                    align: "start",
+                    loop: movies.length > 5,
+                  }}
+                  className="w-full"
+                >
+                  <CarouselContent>
+                    {movies.map((movie) => (
+                      <CarouselItem key={movie.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
+                          <MovieCard
+                            movie={movie}
+                            isSelected={selectedMovies.has(movie.id)}
+                            onSelect={() => handleSelectMovie(movie)}
+                          />
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious />
+                  <CarouselNext />
+                </Carousel>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                {moviesToDisplay.map((movie) => (
-                  <MovieCard
-                    key={movie.id}
-                    movie={movie}
-                    isSelected={selectedMovies.has(movie.id)}
-                    onSelect={() => handleSelectMovie(movie)}
-                  />
-                ))}
-              </div>
-              {moviesToDisplay.length === 0 && !isSearching && (
-                <Card className="flex flex-col items-center justify-center text-center p-8 h-64 bg-card border-dashed border-border">
-                  <Film className="h-16 w-16 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground font-medium">
-                    {searchTerm ? 'No movies found for your search.' : (selectedGenre ? `No movies found in the ${selectedGenre} genre.` : 'No movies available.')}
-                  </p>
-                </Card>
-              )}
+            )
+          ))}
+          {allMovies.length === 0 && !isSearching && (
+             <Card className="flex flex-col items-center justify-center text-center p-8 h-64 bg-card border-dashed border-border">
+                <Film className="h-16 w-16 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground font-medium">No movies available. Try searching for one!</p>
+             </Card>
+          )}
         </section>
         
-        <section id="recommendations-section">
-            <div className="flex justify-between items-center mb-6">
+        <section id="recommendations-section" className="space-y-8">
+            <div className="flex justify-between items-center">
               <h2 className="text-3xl font-bold text-foreground">
                   Your AI Recommendations
-                  {recommendations.length > 0 && !isPending && (
-                    <Badge variant="secondary" className="ml-3 text-lg">{recommendations.length}</Badge>
-                  )}
               </h2>
               {recommendations.length > 0 && (
                 <Button onClick={handleDownloadRecommendations} variant="outline" size="sm" className="bg-secondary hover:bg-border">
@@ -360,16 +337,27 @@ export default function Home() {
                     <LoaderCircle className="h-16 w-16 animate-spin text-primary" />
                 </div>
             ) : recommendations.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                {recommendations.map((movie) => (
-                    <MovieCard
-                    key={movie.id}
-                    movie={movie}
-                    isSelected={false} // Recommendations are not selectable
-                    onSelect={() => {}} // No action on select
-                    />
-                ))}
-                </div>
+                 <Carousel
+                  opts={{
+                    align: "start",
+                    loop: recommendations.length > 5,
+                  }}
+                  className="w-full"
+                >
+                  <CarouselContent>
+                    {recommendations.map((movie) => (
+                      <CarouselItem key={movie.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
+                          <MovieCard
+                            movie={movie}
+                            isSelected={false}
+                            onSelect={() => {}}
+                          />
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious />
+                  <CarouselNext />
+                </Carousel>
             ) : (
                 <Card className="flex flex-col items-center justify-center text-center p-8 h-64 bg-card border-dashed border-border">
                     <Film className="h-16 w-16 text-muted-foreground mb-4" />
@@ -381,7 +369,7 @@ export default function Home() {
         </section>
       </main>
       <footer className="text-center p-6 text-muted-foreground border-t border-border mt-12">
-        Made by Agrannya SIngh
+        Made with ❤️ by the ScreenScout Team
       </footer>
     </div>
   );
