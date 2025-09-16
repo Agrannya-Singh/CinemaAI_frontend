@@ -5,7 +5,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo 'Checking out code...'
-                git branch: 'main', url: 'https://github.com/your-repo/cinemaai.git'
+                checkout scm
             }
         }
 
@@ -40,6 +40,7 @@ pipeline {
         }
         failure {
             echo 'Pipeline failed.'
+            //can add SES/SMS /Slack channel here to notify the developers 
         }
     }
 }
