@@ -1,4 +1,4 @@
-# ScreenScout: Your Personal Movie Recommendation Engine
+# **ScreenScout: Your Personal Movie Recommendation Engine**
 
 Welcome to ScreenScout! This is a Next.js web application designed to provide personalized movie recommendations based on your favorite films. You can search for movies, select the ones you like, and our AI-powered backend will suggest other movies you might enjoy.
 
