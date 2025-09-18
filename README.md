@@ -36,6 +36,17 @@ To run this project locally, follow these steps:
 
 The application will be available at `http://localhost:9002`.
 
+##Key Acheivements metrics
+
+-Developed a full-stack AI movie recommendation system using Next.js and FastAPI, leveraging scikit-learn to
+deliver personalized suggestions for over 15,000 movies.
+– Architected a RESTful API with FastAPI, implementing search and recommendation endpoints with CORS-
+optimized routing, achieving sub-second response times.
+– Integrated the ODb API for real-time movie data collection, with robust error handling and data validation for
+seamless external API interactions.
+– Developed content-based recommendation algorithms using scikit-learn, delivering suggestions to the user in under
+500ms.
+
 ---
 
 ## API Documentation
