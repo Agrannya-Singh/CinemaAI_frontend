@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { useRouter } from 'next/router'
-import { supabase } from '@/lib/supabaseClient'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabaseClient'
 import { toast } from 'sonner'
 
 const AuthContext = createContext({})
@@ -12,6 +12,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
   const [userRole, setUserRole] = useState(null)
   const router = useRouter()
+  const supabase = createClient()
 
   // Fetch user role from your database
   const fetchUserRole = async (userId) => {
@@ -80,7 +81,7 @@ export const AuthProvider = ({ children }) => {
     return () => {
       subscription?.unsubscribe()
     }
-  }, [router])
+  }, [router, supabase.auth])
 
   // Sign up with email and password
   const signUp = async (email, password, fullName) => {
@@ -216,7 +217,7 @@ export const AuthProvider = ({ children }) => {
     signInWithProvider,
     signOut,
     resetPassword,
-    updatePassword,
+_    updatePassword,
     sendVerificationEmail,
     user,
     userRole,
