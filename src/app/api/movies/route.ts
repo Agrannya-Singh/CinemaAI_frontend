@@ -1,24 +1,21 @@
+import { createClient } from '@/utils/supabase/server'
+import { NextResponse } from 'next/server'
 
-import { NextResponse } from 'next/server';
-
-const API_BASE_URL = 'https://cinemaai-backend.onrender.com';
-
-// This route now acts as a direct proxy to the backend's /movies endpoint.
 export async function GET() {
+  const supabase = createClient()
+  
   try {
-    const response = await fetch(`${API_BASE_URL}/movies`);
+    const { data: movies, error } = await supabase.from('movies').select('*')
 
-    if (!response.ok) {
-        const errorBody = await response.text();
-        console.error('Failed to fetch movies from backend:', errorBody);
-        return NextResponse.json({ error: 'Failed to fetch movies from backend', details: errorBody }, { status: response.status });
+    if (error) {
+      console.error('Error fetching movies from Supabase:', error)
+      return NextResponse.json({ error: 'Failed to fetch movies', details: error.message }, { status: 500 })
     }
 
-    const movies = await response.json();
-    return NextResponse.json(movies);
+    return NextResponse.json(movies)
 
   } catch (error) {
-    console.error('Error fetching movies from backend:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error('Unexpected error fetching movies:', error)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
