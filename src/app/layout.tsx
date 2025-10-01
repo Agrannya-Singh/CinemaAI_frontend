@@ -1,10 +1,8 @@
-'use client';
-
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { Inter } from 'next/font/google';
-import { AuthProvider } from '@/context/AuthContext';
+import { ClientProviders } from './ClientProviders';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -21,9 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
-        <AuthProvider>
+        <ClientProviders>
           {children}
-        </AuthProvider>
+        </ClientProviders>
         <Toaster />
       </body>
     </html>
