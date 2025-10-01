@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
+import { Pool } from 'pg';
 
 export interface Movie {
   id: string; 
@@ -25,8 +26,17 @@ export interface ApiMovie {
 }
 
 const API_BASE_URL = '/api'; 
-const supabase = createClient();
+// Configure PostgreSQL pool using DATABASE_URL
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 20, // Pool size
+});
 
+// Check for connection errors
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err);
+});
+const supabase = createClient();
 // Helper to transform API movie to our local Movie interface
 export function transformApiMovie(apiMovie: ApiMovie): Movie | null {
   if (!apiMovie || !apiMovie.id) return null;
