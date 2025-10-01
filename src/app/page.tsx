@@ -2,8 +2,6 @@
 'use client';
 
 import { useState, useMemo, useCallback, useTransition, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
 import { Movie, getMovies, searchMovies, transformApiMovie } from '@/lib/movies';
 import { MovieCard } from '@/components/movie-card';
 import { Button } from '@/components/ui/button';
@@ -29,7 +27,6 @@ type GroupedMovies = {
 
 export default function Home() {
   const { toast } = useToast();
-  const { user, signOut } = useAuth();
   
   const [allMovies, setAllMovies] = useState<Movie[]>([]);
   const [groupedMovies, setGroupedMovies] = useState<GroupedMovies>({});
@@ -240,31 +237,12 @@ export default function Home() {
       <div className="flex flex-col min-h-screen bg-background text-foreground">
         <header className="sticky top-0 z-20 w-full bg-gradient-to-b from-background to-transparent">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20">
-            <div className="flex items-center space-x-4">
-              <Clapperboard className="h-10 w-10 text-primary" />
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tighter">
-                ScreenScout
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              {user ? (
-                <>
-                  <Button variant="outline" asChild>
-                    <Link href="/dashboard">Dashboard</Link>
-                  </Button>
-                  <Button onClick={signOut}>Sign Out</Button>
-                </>
-              ) : (
-                <>
-                  <Button variant="outline" asChild>
-                    <Link href="/login">Sign In</Link>
-                  </Button>
-                  <Button asChild>
-                    <Link href="/signup">Sign Up</Link>
-                  </Button>
-                </>
-              )}
-            </div>
+              <div className="flex items-center space-x-4">
+                  <Clapperboard className="h-10 w-10 text-primary" />
+                  <h1 className="text-3xl md:text-4xl font-bold tracking-tighter">
+                      ScreenScout
+                  </h1>
+              </div>
           </div>
         </header>
 
