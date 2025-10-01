@@ -1,5 +1,4 @@
-
-'use client';
+import { createClient } from '@/lib/supabase/client';
 
 export interface Movie {
   id: string; 
@@ -26,6 +25,7 @@ export interface ApiMovie {
 }
 
 const API_BASE_URL = '/api'; 
+const supabase = createClient();
 
 // Helper to transform API movie to our local Movie interface
 export function transformApiMovie(apiMovie: ApiMovie): Movie | null {
@@ -45,20 +45,22 @@ export function transformApiMovie(apiMovie: ApiMovie): Movie | null {
 }
 
 
-export async function getMovies(): Promise<Movie[]> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/movies`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch movies');
+// Fetches movies from the Supabase database
+export async function getSupabaseMovies(): Promise<Movie[]> {
+    const { data: movies, error } = await supabase.from('movies').select('*');
+    if (error) {
+        console.error('Error fetching movies from Supabase:', error);
+        return [];
     }
-    const data: ApiMovie[] = await response.json();
-    return data.map(transformApiMovie).filter((movie): movie is Movie => movie !== null);
-  } catch (error) {
-    console.error('Error in getMovies:', error);
-    return [];
-  }
+    return movies;
 }
 
+// Main function to get movies, now using Supabase
+export async function getMovies(): Promise<Movie[]> {
+    return await getSupabaseMovies();
+}
+
+// Search for movies using the external API and add to Supabase
 export async function searchMovies(identifier: string): Promise<Movie[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/search/${encodeURIComponent(identifier)}`);
@@ -67,10 +69,20 @@ export async function searchMovies(identifier: string): Promise<Movie[]> {
       return [];
     }
     const data: ApiMovie[] = await response.json();
-    // The backend search endpoint for a single movie returns an object, not an array.
-    // We wrap it to handle both cases gracefully.
     const moviesArray = Array.isArray(data) ? data : [data];
-    return moviesArray.map(transformApiMovie).filter((movie): movie is Movie => movie !== null);
+
+    const transformedMovies = moviesArray.map(transformApiMovie).filter((movie): movie is Movie => movie !== null);
+
+    // Add newly found movies to Supabase asynchronously
+    if (transformedMovies.length > 0) {
+        const { error: upsertError } = await supabase.from('movies').upsert(transformedMovies, { onConflict: 'id' });
+        if (upsertError) {
+            console.error('Error saving movie to Supabase:', upsertError);
+        }
+    }
+
+    return transformedMovies;
+
   } catch (error) {
     console.error('Error in searchMovies:', error);
     return [];
