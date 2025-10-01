@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: cinema-ai-backend
+    env: python
+    region: oregon
+    plan: free
+    healthCheckPath: /
+    buildFilter:
+      paths:
+      - CinemaAI_backend/**
+    buildCommand: "pip install -r CinemaAI_backend/requirements.txt"
+    startCommand: "uvicorn CinemaAI_backend.main:app --host 0.0.0.0 --port $PORT"
