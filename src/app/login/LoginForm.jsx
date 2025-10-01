@@ -77,7 +77,7 @@ export default function LoginForm() {
                   type="email"
                   autoComplete="email"
                   required
-                  className="pl-10"
+                  className="pl-10 text-gray-900"
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -104,7 +104,7 @@ export default function LoginForm() {
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   required
-                  className="pl-10 pr-10"
+                  className="pl-10 pr-10 text-gray-900"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
