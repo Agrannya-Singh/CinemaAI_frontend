@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Mail, Lock, Eye, EyeOff, Github, Google, Loader2 } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 
@@ -17,7 +17,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { signIn, signInWithProvider } = useAuth()
+  const { signIn } = useAuth()
 
   useEffect(() => {
     // Check for error message from OAuth
@@ -47,23 +47,6 @@ export default function LoginPage() {
     }
   }
 
-  const handleOAuthSignIn = async (provider) => {
-    try {
-      setLoading(true)
-      setError('')
-      
-      const { error } = await signInWithProvider(provider)
-      if (error) throw error
-      
-      // The OAuth flow will handle the redirect
-    } catch (err) {
-      setError('Failed to sign in with ' + provider)
-      toast.error('Authentication failed')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
@@ -80,36 +63,6 @@ export default function LoginPage() {
           )}
 
           <div className="mt-8 space-y-6">
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
-                onClick={() => handleOAuthSignIn('google')}
-                disabled={loading}
-                className="flex items-center justify-center gap-2"
-              >
-                <Google className="h-4 w-4" />
-                <span>Google</span>
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleOAuthSignIn('github')}
-                disabled={loading}
-                className="flex items-center justify-center gap-2"
-              >
-                <Github className="h-4 w-4" />
-                <span>GitHub</span>
-              </Button>
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
-              </div>
-            </div>
-
             <form className="space-y-5" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">

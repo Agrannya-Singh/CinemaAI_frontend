@@ -125,25 +125,6 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // Sign in with OAuth provider
-  const signInWithProvider = async (provider) => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-
-      if (error) throw error
-      
-      return { error: null }
-    } catch (error) {
-      console.error('OAuth error:', error)
-      return { error }
-    }
-  }
-
   // Sign out
   const signOut = async () => {
     try {
@@ -214,10 +195,9 @@ export const AuthProvider = ({ children }) => {
   const value = {
     signUp,
     signIn,
-    signInWithProvider,
     signOut,
     resetPassword,
-_    updatePassword,
+    updatePassword,
     sendVerificationEmail,
     user,
     userRole,
