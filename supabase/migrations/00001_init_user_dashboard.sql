@@ -1,29 +1,29 @@
--- Create tables first
+-- Create extensions first
+create extension if not exists "uuid-ossp";
+create extension if not exists "uuid-ossp";
+
 create table if not exists movies (
-    id text primary key,
+    id bigint primary key,
     title text not null,
     overview text,
     vote_average numeric(3,1),
     poster_path text,
     genre text,
+    imdb_id text unique,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 create table if not exists user_movies (
     id uuid default uuid_generate_v4() primary key,
     user_id uuid references auth.users(id) on delete cascade not null,
-    movie_id text references movies(id) on delete cascade not null,
+    movie_id bigint references movies(id) on delete cascade not null,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+    rating smallint check (rating >= 0 and rating <= 10),
+    notes text,
+    is_favorite boolean default false,
+    watched_at timestamp with time zone,
     unique(user_id, movie_id)
 );
-
--- Enable RLS (Row Level Security)
-alter table movies enable row level security;
-alter table user_movies enable row level security;
-alter table user_preferences enable row level security;
-alter table user_lists enable row level security;
-
--- Other tables
 create table if not exists user_preferences (
   id uuid default uuid_generate_v4() primary key,
   user_id uuid references auth.users(id) on delete cascade not null,
@@ -43,16 +43,11 @@ create table if not exists user_lists (
   name text not null,
   description text,
   is_public boolean default false,
-  movies text[] default '{}',
+  movies bigint[] default '{}',
   unique(user_id, name)
 );
 
--- Add new columns to user_movies if they don't exist
-alter table user_movies 
-  add column if not exists rating smallint check (rating >= 0 and rating <= 10),
-  add column if not exists notes text,
-  add column if not exists is_favorite boolean default false,
-  add column if not exists watched_at timestamp with time zone;
+-- All columns are now included in the table creation above
 
 -- Create view for user movie details
 create or replace view user_movie_details as
