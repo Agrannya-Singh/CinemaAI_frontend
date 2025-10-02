@@ -69,9 +69,9 @@ const setCacheData = (key: string, data: Movie[]) => {
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ identifier: string }> }
+  { params }: { params: { identifier: string } }
 ) {
-  const { identifier } = await params;
+  const { identifier } = params;
   const cacheKey = `search:${identifier}`;
   
   // Check cache first
