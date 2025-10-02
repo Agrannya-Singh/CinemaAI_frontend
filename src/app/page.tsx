@@ -58,7 +58,9 @@ export default function Home() {
 
   const fetchAllMovies = useCallback(async () => {
     try {
+        console.log('Fetching movies...');
         const fetchedMovies = await getMovies();
+        console.log('Movies fetched:', fetchedMovies?.length || 0, 'movies');
         const uniqueMovies = getUniqueMovies(fetchedMovies);
         setAllMovies(uniqueMovies);
 

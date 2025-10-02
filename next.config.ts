@@ -1,7 +1,9 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    outputFileTracingRoot: __dirname, // Set the workspace root to current directory
+  },
   typescript: {
     ignoreBuildErrors: true,
   },

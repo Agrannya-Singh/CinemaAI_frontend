@@ -1,6 +1,4 @@
-import { createClient } from '@/lib/supabase/client';
-import { Pool } from 'pg';
-
+// Types shared between client and server
 export interface Movie {
   id: string; 
   imdbID: string;
@@ -25,18 +23,8 @@ export interface ApiMovie {
   release_date: string; // Year
 }
 
-const API_BASE_URL = '/api'; 
-// Configure PostgreSQL pool using DATABASE_URL
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 20, // Pool size
-});
+const API_BASE_URL = '/api';
 
-// Check for connection errors
-pool.on('error', (err) => {
-  console.error('Unexpected error on idle client', err);
-});
-const supabase = createClient();
 // Helper to transform API movie to our local Movie interface
 export function transformApiMovie(apiMovie: ApiMovie): Movie | null {
   if (!apiMovie || !apiMovie.id) return null;
@@ -55,19 +43,20 @@ export function transformApiMovie(apiMovie: ApiMovie): Movie | null {
 }
 
 
-// Fetches movies from the Supabase database
-export async function getSupabaseMovies(): Promise<Movie[]> {
-    const { data: movies, error } = await supabase.from('movies').select('*');
-    if (error) {
-        console.error('Error fetching movies from Supabase:', error);
+// Fetch movies from our Next.js API endpoint
+export async function getMovies(): Promise<Movie[]> {
+    try {
+        const response = await fetch(`${API_BASE_URL}/movies`);
+        if (!response.ok) {
+            console.error('Error fetching movies:', response.statusText);
+            return [];
+        }
+        const movies = await response.json();
+        return movies;
+    } catch (error) {
+        console.error('Error fetching movies:', error);
         return [];
     }
-    return movies;
-}
-
-// Main function to get movies, now using Supabase
-export async function getMovies(): Promise<Movie[]> {
-    return await getSupabaseMovies();
 }
 
 // Search for movies using the external API and add to Supabase
@@ -83,11 +72,21 @@ export async function searchMovies(identifier: string): Promise<Movie[]> {
 
     const transformedMovies = moviesArray.map(transformApiMovie).filter((movie): movie is Movie => movie !== null);
 
-    // Add newly found movies to Supabase asynchronously
+    // Save the transformed movies through our API
     if (transformedMovies.length > 0) {
-        const { error: upsertError } = await supabase.from('movies').upsert(transformedMovies, { onConflict: 'id' });
-        if (upsertError) {
-            console.error('Error saving movie to Supabase:', upsertError);
+        try {
+            const saveResponse = await fetch(`${API_BASE_URL}/movies`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(transformedMovies)
+            });
+            if (!saveResponse.ok) {
+                console.error('Error saving movies:', saveResponse.statusText);
+            }
+        } catch (error) {
+            console.error('Error saving movies:', error);
         }
     }
 

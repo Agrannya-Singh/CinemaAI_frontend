@@ -12,10 +12,32 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch movies', details: error.message }, { status: 500 })
     }
 
-    return NextResponse.json(movies)
+    console.log('Movies fetched from Supabase:', movies?.length || 0, 'movies found')
+    return NextResponse.json(movies || [])
 
   } catch (error) {
     console.error('Unexpected error fetching movies:', error)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+  }
+}
+
+export async function POST(request: Request) {
+  const supabase = createClient()
+  
+  try {
+    const movies = await request.json()
+    
+    const { error } = await supabase.from('movies').upsert(movies, { onConflict: 'id' })
+
+    if (error) {
+      console.error('Error saving movies to Supabase:', error)
+      return NextResponse.json({ error: 'Failed to save movies', details: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ message: 'Movies saved successfully' })
+
+  } catch (error) {
+    console.error('Unexpected error saving movies:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

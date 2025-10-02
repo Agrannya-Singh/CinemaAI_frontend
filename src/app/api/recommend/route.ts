@@ -16,7 +16,6 @@ function filterMovies(movies: ApiMovie[]): ApiMovie[] {
     return movies.filter(movie => !containsOffensiveTerm(movie.title));
 }
 
-
 export async function POST(request: Request) {
   try {
     const body = await request.json();
