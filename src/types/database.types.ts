@@ -11,13 +11,14 @@ export interface Database {
     Tables: {
       movies: {
         Row: {
-          id: string
+          id: number
           created_at: string
           title: string
           overview: string
           vote_average: number
           poster_path: string
           genre: string | null
+          imdb_id: string | null
         }
         Insert: {
           id: string

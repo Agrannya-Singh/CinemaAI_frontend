@@ -4,7 +4,7 @@ const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 // Types shared between client and server
 export interface Movie {
-  id: string;
+  id: string | number;
   created_at?: string;
   title: string;
   overview: string;
