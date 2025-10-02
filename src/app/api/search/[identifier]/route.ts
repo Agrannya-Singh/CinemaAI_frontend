@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 
-const API_BASE_URL = 'https://cinemaai-backend.onrender.com';
+const API_BASE_URL = 'https://cinemaai-backend.onrender.com'; //hosting path of fastapi backend
 
 // This route now proxies search requests to the backend.
 export async function GET(
