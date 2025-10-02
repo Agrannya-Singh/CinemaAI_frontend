@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, PostgrestResponse } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
 
 
@@ -69,9 +69,9 @@ const setCacheData = (key: string, data: Movie[]) => {
 
 export async function GET(
   request: Request,
-  { params }: { params: { identifier: string } }
+  { params }: { params: Promise<{ identifier: string }> }
 ) {
-  const { identifier } = params;
+  const { identifier } = await params;
   const cacheKey = `search:${identifier}`;
   
   // Check cache first
@@ -95,10 +95,7 @@ export async function GET(
     ]);
 
     try {
-      const { data: supabaseMovies, error } = await supabasePromise as Promise<{ 
-        data: Movie[] | null; 
-        error: Database['public']['Tables']['movies']['Row'] | null 
-      }>;
+      const { data: supabaseMovies, error } = await (supabasePromise as Promise<PostgrestResponse<Movie>>);
 
       if (error) throw error;
 
@@ -144,22 +141,26 @@ export async function GET(
         if (omdbResponse.ok) {
           const omdbData = await omdbResponse.json();
           if (omdbData.Response === 'True') {
-            const movie = {
+            const movie: Movie = {
               id: omdbData.imdbID,
               title: omdbData.Title,
               overview: omdbData.Plot,
               vote_average: parseFloat(omdbData.imdbRating) || 0,
               poster_path: omdbData.Poster,
               genre: omdbData.Genre?.split(', ')[0] || 'Unknown',
-              created_at: new Date().toISOString()
+              created_at: new Date().toISOString(),
+              imdb_id: omdbData.imdbID
             };
             
             // Save to Supabase in the background
-            void supabase
-              .from('movies')
-              .insert([movie])
-              .then(() => console.log('Movie saved to Supabase'))
-              .catch((err: Error) => console.error('Failed to save to Supabase:', err));
+            (async () => {
+              try {
+                await supabase.from('movies').insert([movie]);
+                console.log('Movie saved to Supabase');
+              } catch (err) {
+                console.error('Failed to save to Supabase:', err);
+              }
+            })();
             
             setCacheData(cacheKey, [movie]);
             return NextResponse.json([movie]);
