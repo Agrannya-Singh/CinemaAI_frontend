@@ -53,38 +53,29 @@ export async function getMovies(): Promise<Movie[]> {
     }
 }
 
-// Search for movies using the external API and add to Supabase
+// Search for movies in Supabase first, then fallback to external API
 export async function searchMovies(identifier: string): Promise<Movie[]> {
   try {
+    console.log('Searching for movies with identifier:', identifier);
     const response = await fetch(`${API_BASE_URL}/search/${encodeURIComponent(identifier)}`);
+    
     if (!response.ok) {
-      console.error('Backend search failed:', response.statusText);
+      console.error('Search request failed:', response.statusText);
       return [];
     }
-    const data: ApiMovie[] = await response.json();
-    const moviesArray = Array.isArray(data) ? data : [data];
-
-    const transformedMovies = moviesArray.map(transformApiMovie).filter((movie): movie is Movie => movie !== null);
-
-    // Save the transformed movies through our API
-    if (transformedMovies.length > 0) {
-        try {
-            const saveResponse = await fetch(`${API_BASE_URL}/movies`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(transformedMovies)
-            });
-            if (!saveResponse.ok) {
-                console.error('Error saving movies:', saveResponse.statusText);
-            }
-        } catch (error) {
-            console.error('Error saving movies:', error);
-        }
+    
+    const data = await response.json();
+    
+    // The API now returns movies in the correct format, no need to transform
+    const movies = Array.isArray(data) ? data : [data];
+    
+    if (movies.length === 0) {
+      console.log('No movies found for:', identifier);
+    } else {
+      console.log('Found', movies.length, 'movies');
     }
-
-    return transformedMovies;
+    
+    return movies;
 
   } catch (error) {
     console.error('Error in searchMovies:', error);
