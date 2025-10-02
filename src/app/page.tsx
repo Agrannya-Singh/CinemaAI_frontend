@@ -1,40 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useCallback, useTransitio        // Add         // Process movies with default genre
-        const processedMovies = fetchedMovies.map(movie => ({
-          ...movie,
-          genre: 'Fiction'  // Add default genre
-        }));
-
-        const uniqueMovies = getUniqueMovies(processedMovies);
-
-        // Group movies by different categories
-        const genres: GroupedMovies = {
-          'All Movies': uniqueMovies,
-          'Top Rated': uniqueMovies.filter(movie => movie.vote_average >= 7.5),
-          'Recently Added': uniqueMovies.sort((a, b) => 
-            new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime()
-          ).slice(0, 20)
-        };
-
-        setAllMovies(uniqueMovies);
-        setGroupedMovies(genres);movies
-        const moviesWithGenre = fetchedMovies.map(movie => ({
-          ...movie,
-          genre: "Fiction" // Default genre
-        }));
-
-        const uniqueMovies = getUniqueMovies(moviesWithGenre);
-
-        // Group all movies under "All Movies" category
-        const genres: GroupedMovies = {
-          "All Movies": uniqueMovies,
-          "Popular": uniqueMovies.filter(movie => movie.vote_average >= 7.5),
-          "Recent Additions": uniqueMovies.slice(-20) // Show last 20 added movies
-        };
-        
-        setGroupedMovies(genres);Ref } from 'react';
+import { useState, useMemo, useCallback, useTransition, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { Movie, getMovies, searchMovies, transformApiMovie } from '@/lib/movies';
@@ -96,29 +63,22 @@ export default function Home() {
         console.log('Movies fetched:', fetchedMovies?.length || 0, 'movies');
         console.log('Sample movie:', fetchedMovies[0]);
         
-        // Check if movies have the expected structure
-        if (fetchedMovies.length > 0 && (!fetchedMovies[0].genre || typeof fetchedMovies[0].genre !== 'string')) {
-            console.error('Movies are missing genre information:', fetchedMovies[0]);
-            return;
-        }
-        
-        const uniqueMovies = getUniqueMovies(fetchedMovies);
+        // Process movies with default genre and unique filtering
+        const processedMovies = fetchedMovies.map(movie => ({
+          ...movie,
+          genre: 'Fiction'  // Add default genre
+        }));
+        const uniqueMovies = getUniqueMovies(processedMovies);
         setAllMovies(uniqueMovies);
 
-        const genres: GroupedMovies = {};
-        uniqueMovies.forEach(movie => {
-          if (movie.genre) {
-            movie.genre.split(',').forEach(g => {
-              const trimmedGenre = g.trim();
-              if(trimmedGenre) {
-                if (!genres[trimmedGenre]) {
-                  genres[trimmedGenre] = [];
-                }
-                genres[trimmedGenre].push(movie);
-              }
-            });
-          }
-        });
+        // Group movies by different categories
+        const genres: GroupedMovies = {
+          'All Movies': uniqueMovies,
+          'Top Rated': uniqueMovies.filter(movie => movie.vote_average >= 7.5),
+          'Recently Added': uniqueMovies.sort((a, b) => 
+            new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime()
+          ).slice(0, 20)
+        };
         setGroupedMovies(genres);
         console.log('Grouped movies:', Object.keys(genres));
         console.log('Movies by genre sample:', Object.entries(genres)[0]);
