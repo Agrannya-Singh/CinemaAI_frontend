@@ -27,15 +27,12 @@ export function transformApiMovie(apiMovie: ApiMovie): Movie | null {
   if (!apiMovie || !apiMovie.id) return null;
   return {
     id: apiMovie.id,
-    imdbID: apiMovie.id,
     title: apiMovie.title,
-    year: apiMovie.release_date,
-    genre: apiMovie.genres,
-    poster: apiMovie.poster_path === 'N/A' ? `https://placehold.co/300x450.png` : apiMovie.poster_path,
-    posterHint: apiMovie.overview?.split(' ').slice(0, 2).join(' ').toLowerCase() || 'movie poster',
     overview: apiMovie.overview,
-    cast: apiMovie.cast,
-    rating: apiMovie.vote_average,
+    vote_average: apiMovie.vote_average,
+    poster_path: apiMovie.poster_path === 'N/A' ? `https://placehold.co/300x450.png` : apiMovie.poster_path,
+    genre: apiMovie.genres.split(',')[0].trim(), // Take the first genre
+    created_at: new Date().toISOString() // Set current date as creation date
   };
 }
 
