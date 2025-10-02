@@ -1,0 +1,27 @@
+'use client';
+
+import { useState, useMemo, useCallback, useTransition, useRef, useEffect } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
+import { Movie, getMovies, searchMovies, transformApiMovie } from '@/lib/movies';
+import { MovieCard } from '@/components/movie-card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
+import { Search, Film, LoaderCircle, Download, Clapperboard } from 'lucide-react';
+import type { ApiMovie } from '@/lib/movies';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import Autoplay from "embla-carousel-autoplay";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+
+type GroupedMovies = {
+  [genre: string]: Movie[];
+};
