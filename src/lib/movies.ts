@@ -1,3 +1,7 @@
+// API Configuration
+const API_BASE_URL = '/api';
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
 // Types shared between client and server
 export interface Movie {
   id: string;
@@ -6,7 +10,8 @@ export interface Movie {
   overview: string;
   vote_average: number;
   poster_path: string;
-  genre?: string; // Optional, we'll set a default
+  genre?: string;
+  last_fetched?: number; // Timestamp of last fetch
 }
 
 export interface ApiMovie {
@@ -20,7 +25,34 @@ export interface ApiMovie {
   release_date: string; // Year
 }
 
-const API_BASE_URL = '/api';
+// Cache configuration
+interface CacheEntry {
+  timestamp: number;
+  data: Movie[];
+}
+
+const searchCache = new Map<string, CacheEntry>();
+
+// Cache helper functions
+function getCachedSearch(query: string): Movie[] | null {
+  const cached = searchCache.get(query);
+  if (!cached) return null;
+  
+  // Check if cache is still valid
+  if (Date.now() - cached.timestamp > CACHE_DURATION) {
+    searchCache.delete(query);
+    return null;
+  }
+  
+  return cached.data;
+}
+
+function setCachedSearch(query: string, movies: Movie[]) {
+  searchCache.set(query, {
+    timestamp: Date.now(),
+    data: movies
+  });
+}
 
 // Helper to transform API movie to our local Movie interface
 export function transformApiMovie(apiMovie: ApiMovie): Movie | null {
@@ -53,11 +85,26 @@ export async function getMovies(): Promise<Movie[]> {
     }
 }
 
-// Search for movies in Supabase first, then fallback to external API
+// Search for movies with caching and optimized external calls
 export async function searchMovies(identifier: string): Promise<Movie[]> {
   try {
-    console.log('Searching for movies with identifier:', identifier);
-    const response = await fetch(`${API_BASE_URL}/search/${encodeURIComponent(identifier)}`);
+    // Normalize search term
+    const normalizedQuery = identifier.trim().toLowerCase();
+    
+    // Check in-memory cache first
+    const cachedResults = getCachedSearch(normalizedQuery);
+    if (cachedResults) {
+      console.log('Retrieved from cache:', normalizedQuery);
+      return cachedResults;
+    }
+
+    // If not in cache, make API request
+    console.log('Searching for movies with identifier:', normalizedQuery);
+    const response = await fetch(`${API_BASE_URL}/search/${encodeURIComponent(normalizedQuery)}`, {
+      headers: {
+        'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
+      }
+    });
     
     if (!response.ok) {
       console.error('Search request failed:', response.statusText);
@@ -65,17 +112,23 @@ export async function searchMovies(identifier: string): Promise<Movie[]> {
     }
     
     const data = await response.json();
-    
-    // The API now returns movies in the correct format, no need to transform
     const movies = Array.isArray(data) ? data : [data];
     
-    if (movies.length === 0) {
-      console.log('No movies found for:', identifier);
+    // Add timestamp to movies
+    const moviesWithTimestamp = movies.map(movie => ({
+      ...movie,
+      last_fetched: Date.now()
+    }));
+    
+    // Cache the results
+    if (moviesWithTimestamp.length > 0) {
+      setCachedSearch(normalizedQuery, moviesWithTimestamp);
+      console.log('Cached results for:', normalizedQuery);
     } else {
-      console.log('Found', movies.length, 'movies');
+      console.log('No movies found for:', normalizedQuery);
     }
     
-    return movies;
+    return moviesWithTimestamp;
 
   } catch (error) {
     console.error('Error in searchMovies:', error);
