@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { createClient } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
@@ -16,16 +16,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const [userMovies, setUserMovies] = useState<Movie[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
-
-  useEffect(() => {
-    if (!user) {
-      router.push('/login')
-      return
-    }
-
-    fetchUserMovies()
-  }, [user, router, fetchUserMovies])
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchUserMovies = useCallback(async () => {
     try {
@@ -41,7 +32,7 @@ export default function DashboardPage() {
         return
       }
 
-      const movieIds = userMovieRelations.map(rel => rel.movie_id)
+      const movieIds = (userMovieRelations as { movie_id: string }[]).map(rel => rel.movie_id)
 
       const { data: movies, error: moviesError } = await supabase
         .from('movies')
@@ -57,7 +48,16 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
-  }, [user?.id, supabase])
+  }, [user?.id || '', supabase])
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+
+    fetchUserMovies()
+  }, [user, router, fetchUserMovies])
 
   const handleDownloadMovies = () => {
     try {
