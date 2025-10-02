@@ -433,7 +433,7 @@ export default function Home() {
           </section>
         </main>
         <footer className="text-center p-6 text-muted-foreground border-t border-border mt-12">
-           Developed and Maintained by Agrannya-Singh
+           Developed and Maintained by [redacted for privacy]
         </footer>
       </div>
     </TooltipProvider>
