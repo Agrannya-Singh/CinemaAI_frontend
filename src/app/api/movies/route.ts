@@ -5,10 +5,19 @@ export async function GET() {
   const supabase = createClient()
   
   try {
-    const { data: movies, error } = await supabase.from('movies').select('*')
+    console.log('Fetching movies from Supabase...');
+    const { data: movies, error } = await supabase
+      .from('movies')
+      .select('*')
+      .limit(100);
 
     if (error) {
-      console.error('Error fetching movies from Supabase:', error)
+      console.error('Error fetching movies from Supabase:', {
+        error,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
       return NextResponse.json({ error: 'Failed to fetch movies', details: error.message }, { status: 500 })
     }
 
