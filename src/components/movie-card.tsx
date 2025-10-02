@@ -25,6 +25,18 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
   const handleImageError = () => {
     setImageError(true);
   };
+
+  // Handle long poster URLs and provide fallback
+  const getPosterUrl = (url: string | null) => {
+    if (!url) return 'https://placehold.co/300x450.png';
+    // If it's an IMDB/Amazon URL, it's likely valid
+    if (url.includes('m.media-amazon.com')) return url;
+    // For other URLs, verify they're not truncated
+    if (url.length > 255) return 'https://placehold.co/300x450.png';
+    return url;
+  };
+
+  const posterUrl = getPosterUrl(movie.poster_path);
   
   const isValidUrl = (url: string) => {
     try {
@@ -35,7 +47,7 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
     }
   };
   
-  const posterSrc = imageError || !movie.poster || !isValidUrl(movie.poster) ? 'https://placehold.co/300x450.png' : movie.poster;
+  const posterSrc = imageError || !movie.poster_path || !isValidUrl(movie.poster_path) ? 'https://placehold.co/300x450.png' : posterUrl;
 
   return (
     <Tooltip>
@@ -55,7 +67,7 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
                 fill
                 sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
-                data-ai-hint={movie.posterHint}
+                data-ai-hint={movie.title?.toLowerCase()}
                 onError={handleImageError}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -75,10 +87,9 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
                   {movie.title}
                 </h3>
                 <div className="flex items-center justify-between text-xs text-white/80 mt-1">
-                    <p>{movie.year}</p>
                     <div className="flex items-center gap-1">
                         <Star className="w-3 h-3 text-yellow-400" />
-                        <span>{movie.rating ? movie.rating.toFixed(1) : 'N/A'}</span>
+                        <span>{movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</span>
                     </div>
                 </div>
               </div>
@@ -87,7 +98,7 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
         </Card>
       </TooltipTrigger>
       <TooltipContent side="bottom" align="start" className="max-w-xs text-sm">
-        <p className="font-bold text-base mb-2">{movie.title} ({movie.year})</p>
+        <p className="font-bold text-base mb-2">{movie.title}</p>
         <p className="text-muted-foreground">{movie.overview}</p>
       </TooltipContent>
     </Tooltip>

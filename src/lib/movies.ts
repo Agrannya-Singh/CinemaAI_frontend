@@ -1,15 +1,12 @@
 // Types shared between client and server
 export interface Movie {
-  id: string; 
-  imdbID: string;
+  id: string;
+  created_at?: string;
   title: string;
-  year: string;
-  genre: string;
-  poster: string;
-  posterHint: string;
   overview: string;
-  cast: string;
-  rating: number;
+  vote_average: number;
+  poster_path: string;
+  genre?: string; // Optional, we'll set a default
 }
 
 export interface ApiMovie {

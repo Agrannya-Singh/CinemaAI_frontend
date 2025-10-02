@@ -1,7 +1,40 @@
 
 'use client';
 
-import { useState, useMemo, useCallback, useTransition, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useTransitio        // Add         // Process movies with default genre
+        const processedMovies = fetchedMovies.map(movie => ({
+          ...movie,
+          genre: 'Fiction'  // Add default genre
+        }));
+
+        const uniqueMovies = getUniqueMovies(processedMovies);
+
+        // Group movies by different categories
+        const genres: GroupedMovies = {
+          'All Movies': uniqueMovies,
+          'Top Rated': uniqueMovies.filter(movie => movie.vote_average >= 7.5),
+          'Recently Added': uniqueMovies.sort((a, b) => 
+            new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime()
+          ).slice(0, 20)
+        };
+
+        setAllMovies(uniqueMovies);
+        setGroupedMovies(genres);movies
+        const moviesWithGenre = fetchedMovies.map(movie => ({
+          ...movie,
+          genre: "Fiction" // Default genre
+        }));
+
+        const uniqueMovies = getUniqueMovies(moviesWithGenre);
+
+        // Group all movies under "All Movies" category
+        const genres: GroupedMovies = {
+          "All Movies": uniqueMovies,
+          "Popular": uniqueMovies.filter(movie => movie.vote_average >= 7.5),
+          "Recent Additions": uniqueMovies.slice(-20) // Show last 20 added movies
+        };
+        
+        setGroupedMovies(genres);Ref } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { Movie, getMovies, searchMovies, transformApiMovie } from '@/lib/movies';
@@ -62,6 +95,13 @@ export default function Home() {
         const fetchedMovies = await getMovies();
         console.log('Movies fetched:', fetchedMovies?.length || 0, 'movies');
         console.log('Sample movie:', fetchedMovies[0]);
+        
+        // Check if movies have the expected structure
+        if (fetchedMovies.length > 0 && (!fetchedMovies[0].genre || typeof fetchedMovies[0].genre !== 'string')) {
+            console.error('Movies are missing genre information:', fetchedMovies[0]);
+            return;
+        }
+        
         const uniqueMovies = getUniqueMovies(fetchedMovies);
         setAllMovies(uniqueMovies);
 
