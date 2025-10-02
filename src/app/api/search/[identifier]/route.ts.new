@@ -1,14 +1,16 @@
-
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/database.types';
 
 // API Configuration
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://cinemaai-backend-1.onrender.com';
 const OMDB_API_URL = process.env.NEXT_PUBLIC_OMDB_API_URL || 'http://www.omdbapi.com';
 const OMDB_API_KEY = process.env.NEXT_PUBLIC_OMDB_API_KEY;
 
+type Movie = Database['public']['Tables']['movies']['Row'];
+
 // Initialize Supabase with custom fetch options
-const supabase = createClient(
+const supabase = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   {
@@ -40,10 +42,6 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout 
     throw error;
   }
 };
-
-import type { Database } from '@/types/database.types';
-
-type Movie = Database['public']['Tables']['movies']['Row'];
 
 // Cache implementation
 const CACHE_DURATION = 3600000; // 1 hour in milliseconds
@@ -87,16 +85,13 @@ export async function GET(
         .select('*')
         .ilike('title', `%${identifier}%`)
         .limit(5),
-      new Promise((_, reject) => 
+      new Promise<never>((_, reject) => 
         setTimeout(() => reject(new Error('Supabase timeout')), 3000)
       )
-    ]);
+    ]) as Promise<{ data: Movie[] | null; error: Error | null }>;
 
     try {
-      const { data: supabaseMovies, error } = await supabasePromise as Promise<{ 
-        data: Movie[] | null; 
-        error: Database['public']['Tables']['movies']['Row'] | null 
-      }>;
+      const { data: supabaseMovies, error } = await supabasePromise;
 
       if (error) throw error;
 
@@ -126,7 +121,7 @@ export async function GET(
       );
       
       if (backendResponse.ok) {
-        const movie = await backendResponse.json();
+        const movie = await backendResponse.json() as Movie;
         setCacheData(cacheKey, [movie]);
         return NextResponse.json([movie]);
       }
@@ -142,13 +137,14 @@ export async function GET(
         if (omdbResponse.ok) {
           const omdbData = await omdbResponse.json();
           if (omdbData.Response === 'True') {
-            const movie = {
-              id: omdbData.imdbID,
+            const movie: Movie = {
+              id: parseInt(omdbData.imdbID.replace('tt', ''), 10),
               title: omdbData.Title,
               overview: omdbData.Plot,
               vote_average: parseFloat(omdbData.imdbRating) || 0,
               poster_path: omdbData.Poster,
-              genre: omdbData.Genre?.split(', ')[0] || 'Unknown',
+              genre: omdbData.Genre?.split(', ')[0] || null,
+              imdb_id: omdbData.imdbID,
               created_at: new Date().toISOString()
             };
             
@@ -157,7 +153,7 @@ export async function GET(
               .from('movies')
               .insert([movie])
               .then(() => console.log('Movie saved to Supabase'))
-              .catch((err: Error) => console.error('Failed to save to Supabase:', err));
+              .catch((error: Error) => console.error('Failed to save to Supabase:', error));
             
             setCacheData(cacheKey, [movie]);
             return NextResponse.json([movie]);
