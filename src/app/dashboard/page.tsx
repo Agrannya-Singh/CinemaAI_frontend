@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { createClient } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { MovieCard } from '@/components/movie-card'
 import { Download, LogOut } from 'lucide-react'
 import { toast } from 'sonner'
@@ -25,9 +25,9 @@ export default function DashboardPage() {
     }
 
     fetchUserMovies()
-  }, [user, router])
+  }, [user, router, fetchUserMovies])
 
-  const fetchUserMovies = async () => {
+  const fetchUserMovies = useCallback(async () => {
     try {
       const { data: userMovieRelations, error: relationsError } = await supabase
         .from('user_movies')
@@ -36,13 +36,13 @@ export default function DashboardPage() {
 
       if (relationsError) throw relationsError
 
-      if (!userMovieRelations.length) {
+      if (!userMovieRelations || !userMovieRelations.length) {
         setLoading(false)
         return
       }
 
       const movieIds = userMovieRelations.map(rel => rel.movie_id)
-      
+
       const { data: movies, error: moviesError } = await supabase
         .from('movies')
         .select('*')
@@ -50,14 +50,14 @@ export default function DashboardPage() {
 
       if (moviesError) throw moviesError
 
-      setUserMovies(movies)
-    } catch (error: any) {
+      setUserMovies(movies || [])
+    } catch (error: unknown) {
       toast.error('Failed to fetch your movies')
       console.error('Error fetching user movies:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [user?.id, supabase])
 
   const handleDownloadMovies = () => {
     try {
@@ -77,7 +77,7 @@ export default function DashboardPage() {
       linkElement.click()
       
       toast.success('Movies list downloaded successfully!')
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Failed to download movies list')
       console.error('Error downloading movies:', error)
     }

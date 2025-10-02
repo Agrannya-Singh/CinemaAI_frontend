@@ -21,8 +21,9 @@ export default function Login() {
       const { error } = await signIn(email, password);
       if (error) throw error;
       router.push('/dashboard');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to sign in');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to sign in';
+      toast.error(message);
     }
   };
 
@@ -32,8 +33,9 @@ export default function Login() {
       const { error } = await sendMagicLink(email);
       if (error) throw error;
       toast.success('Magic link sent to your email');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to send magic link');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to send magic link';
+      toast.error(message);
     }
   };
 
@@ -45,8 +47,9 @@ export default function Login() {
     try {
       const { error } = await resetPassword(email);
       if (error) throw error;
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to send reset link');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to send reset link';
+      toast.error(message);
     }
   };
 

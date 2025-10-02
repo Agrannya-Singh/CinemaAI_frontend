@@ -39,8 +39,9 @@ export function PasswordResetForm() {
       toast.success("Password reset instructions have been sent to your email");
       form.reset();
 
-    } catch (error: any) {
-      toast.error(error.message || "An unexpected error occurred");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "An unexpected error occurred";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

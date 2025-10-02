@@ -1,8 +1,11 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/database.types';
 
-// API Configuration
+
+// API Configuration for fastapi python backend
+// API Configuration  
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://cinemaai-backend-1.onrender.com';
 const OMDB_API_URL = process.env.NEXT_PUBLIC_OMDB_API_URL || 'http://www.omdbapi.com';
 const OMDB_API_KEY = process.env.NEXT_PUBLIC_OMDB_API_KEY;
@@ -41,7 +44,6 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout 
   }
 };
 
-import type { Database } from '@/types/database.types';
 
 type Movie = Database['public']['Tables']['movies']['Row'];
 

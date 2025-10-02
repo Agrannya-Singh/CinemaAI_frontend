@@ -11,7 +11,7 @@ pool.on('error', (err) => {
   console.error('Unexpected error on idle client', err);
 });
 
-export async function queryDatabase(query: string, params?: any[]) {
+export async function queryDatabase(query: string, params?: unknown[]) {
   const client = await pool.connect();
   try {
     const result = await client.query(query, params);
