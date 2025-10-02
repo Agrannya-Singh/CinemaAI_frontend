@@ -2,15 +2,23 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabaseClient'
 import { toast } from 'sonner'
+import { AuthContextType, AuthMode } from '@/types/auth'
 
-const AuthContext = createContext({})
+const AuthContext = createContext<AuthContextType>({} as AuthContextType)
 
-export const useAuth = () => useContext(AuthContext)
+export const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return context
+}
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [userRole, setUserRole] = useState(null)
+  const [authMode, setAuthMode] = useState('password') // 'password' or 'magic-link'
   const router = useRouter()
   const supabase = createClient()
 
@@ -98,6 +106,9 @@ export const AuthProvider = ({ children }) => {
       })
 
       if (error) throw error
+
+      toast.success('Verification email sent. Please check your inbox.')
+      return data
       
       toast.success('Sign up successful! Please check your email for verification.')
       return { user: data.user, error: null }
@@ -137,11 +148,31 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  // Send magic link for passwordless login
+  const sendMagicLink = async (email) => {
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+
+      if (error) throw error
+      
+      toast.success('Magic link sent to your email')
+      return { error: null }
+    } catch (error) {
+      toast.error(error.message || 'Failed to send magic link')
+      return { error }
+    }
+  }
+
   // Send password reset email
   const resetPassword = async (email) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/auth/reset-password`,
       })
 
       if (error) throw error
@@ -199,6 +230,9 @@ export const AuthProvider = ({ children }) => {
     resetPassword,
     updatePassword,
     sendVerificationEmail,
+    sendMagicLink,
+    authMode,
+    setAuthMode,
     user,
     userRole,
     loading,
