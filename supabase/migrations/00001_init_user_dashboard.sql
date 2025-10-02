@@ -1,10 +1,29 @@
+-- Create tables first
+create table if not exists movies (
+    id text primary key,
+    title text not null,
+    overview text,
+    vote_average numeric(3,1),
+    poster_path text,
+    genre text,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create table if not exists user_movies (
+    id uuid default uuid_generate_v4() primary key,
+    user_id uuid references auth.users(id) on delete cascade not null,
+    movie_id text references movies(id) on delete cascade not null,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+    unique(user_id, movie_id)
+);
+
 -- Enable RLS (Row Level Security)
 alter table movies enable row level security;
 alter table user_movies enable row level security;
 alter table user_preferences enable row level security;
 alter table user_lists enable row level security;
 
--- Create tables
+-- Other tables
 create table if not exists user_preferences (
   id uuid default uuid_generate_v4() primary key,
   user_id uuid references auth.users(id) on delete cascade not null,
