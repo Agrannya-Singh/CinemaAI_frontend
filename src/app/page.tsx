@@ -61,6 +61,7 @@ export default function Home() {
         console.log('Fetching movies...');
         const fetchedMovies = await getMovies();
         console.log('Movies fetched:', fetchedMovies?.length || 0, 'movies');
+        console.log('Sample movie:', fetchedMovies[0]);
         const uniqueMovies = getUniqueMovies(fetchedMovies);
         setAllMovies(uniqueMovies);
 
@@ -79,6 +80,8 @@ export default function Home() {
           }
         });
         setGroupedMovies(genres);
+        console.log('Grouped movies:', Object.keys(genres));
+        console.log('Movies by genre sample:', Object.entries(genres)[0]);
 
     } catch (error) {
         console.error("Failed to fetch movies:", error);
