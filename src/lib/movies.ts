@@ -29,27 +29,29 @@ export async function searchMovies(query: string): Promise<Movie[]> {
     }
 }
 
-// 2. RAG Recommendation (Used for the "Curate" Button)
-// Note: Prompt assumes getRecommendations(selectedMovies: Movie[], mood: string)
+// 2. RAG Recommendation (Secure Server-Side)
 export async function getRecommendations(selectedMovies: Movie[], mood: string) {
-    // Prompt Engineering on the Client
-    const titles = selectedMovies.map(m => m.title).join(", ");
-    const prompt = `I liked ${titles}. ${mood ? `I want something ${mood}.` : ''} Recommend a similar movie.`;
-
     try {
-        const res = await fetch(`${API_BASE_URL}/search`, {
+        const res = await fetch(`${API_BASE_URL}/recommend-rag`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: prompt }),
+            body: JSON.stringify({
+                selected_titles: selectedMovies.map(m => m.title),
+                mood: mood
+            }),
         });
 
+        if (!res.ok) throw new Error("Backend RAG Error");
+
         const data = await res.json();
+
+        // Backend returns structured data. 'data.results' are the movies.
         return {
-            ai_response: data.ai_agent_response, // The "Witty Explanation"
-            movies: data.results
+            ai_response: data.ai_agent_response || "Here are some picks for you!",
+            movies: data.results || []
         };
     } catch (error) {
         console.error("Recommendation Error:", error);
-        return { ai_response: "AI is offline.", movies: [] };
+        return { ai_response: "AI is currently offline or unconfigured.", movies: [] };
     }
 }
