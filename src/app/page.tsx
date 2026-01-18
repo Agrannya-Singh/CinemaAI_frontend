@@ -1,176 +1,180 @@
 "use client";
 
-import { useState } from "react";
-import { Movie, searchMovies, getRecommendations } from "@/lib/movies";
+import { useState, useEffect, useRef } from "react";
+import { Movie, fetchMovies, getRecommendations } from "@/lib/movies";
 import { MovieCard } from "@/components/movie-card";
 import { Loader2, Sparkles, Search } from "lucide-react";
+import { useInView } from "react-intersection-observer"; // We need to install this or implement manual observer
+
+// Since I cannot install new packages without permission and 'react-intersection-observer' might not be there,
+// I will implement a manual IntersectionObserver hook or simple verify if the package exists.
+// The user prompt mentioned "Use an Intersection Observer", it didn't strictly say "use react-intersection-observer package".
+// I'll use standard Web API IntersectionObserver to be safe and dependency-free.
 
 export default function Home() {
-    const [query, setQuery] = useState("");
-    const [results, setResults] = useState<Movie[]>([]);
-    const [selectedMovies, setSelectedMovies] = useState<Movie[]>([]);
-    const [mood, setMood] = useState("");
-    const [recommendations, setRecommendations] = useState<{ ai_response: string, movies: Movie[] } | null>(null);
+    const [movies, setMovies] = useState<Movie[]>([]);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [page, setPage] = useState(1);
+    const [isSearching, setIsSearching] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [searching, setSearching] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [aiReasoning, setAiReasoning] = useState("");
 
-    // Search Logic
+    // Ref for infinite scroll
+    const loaderRef = useRef<HTMLDivElement>(null);
+
+    // 1. Initial Load & Infinite Scroll
+    useEffect(() => {
+        // Determine if we should load more
+        // Only load if NOT searching and NOT loading
+        if (!isSearching && !loading) {
+            loadMoreMovies();
+        }
+    }, []); // Initial load
+
+    const loadMoreMovies = async () => {
+        if (loading) return;
+        setLoading(true);
+        try {
+            const newMovies = await fetchMovies(page);
+            if (newMovies.length > 0) {
+                setMovies(prev => [...prev, ...newMovies]);
+                setPage(prev => prev + 1);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Intersection Observer for Infinite Scroll
+    useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && !isSearching && !loading) {
+                loadMoreMovies();
+            }
+        }, { threshold: 1.0 });
+
+        if (loaderRef.current) {
+            observer.observe(loaderRef.current);
+        }
+
+        return () => observer.disconnect();
+    }, [page, isSearching, loading]);
+
+
+    // 3. Toggle Selection
+    const toggleSelection = (movie: Movie) => {
+        setSelectedIds(prev =>
+            prev.includes(movie.id)
+                ? prev.filter(id => id !== movie.id)
+                : [...prev, movie.id]
+        );
+    };
+
+    // Search / Hybrid Recommendation
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!query.trim()) return;
-        setSearching(true);
-        setRecommendations(null); // Clear previous recommendations when searching
-        const movies = await searchMovies(query);
-        setResults(movies);
-        setSearching(false);
-    };
+        if (!searchQuery.trim() && selectedIds.length === 0) return;
 
-    // Selection Logic
-    const toggleSelection = (movie: Movie) => {
-        if (selectedMovies.find(m => m.id === movie.id)) {
-            setSelectedMovies(prev => prev.filter(m => m.id !== movie.id));
-        } else {
-            if (selectedMovies.length >= 5) {
-                alert("You can select up to 5 movies.");
-                return;
-            }
-            setSelectedMovies(prev => [...prev, movie]);
-        }
-    };
-
-    // Recommendation Logic
-    const handleRecommend = async () => {
-        if (selectedMovies.length === 0) {
-            alert("Select at least one movie first!");
-            return;
-        }
+        setIsSearching(true);
         setLoading(true);
-        setRecommendations(null);
-        const data = await getRecommendations(selectedMovies, mood);
-        setRecommendations(data);
-        setLoading(false);
+        // Reset movies to show results only? Or append? usually replace for search results.
+        setMovies([]);
+
+        try {
+            const result = await getRecommendations(searchQuery, selectedIds);
+            setAiReasoning(result.ai_response || result.ai_reasoning);
+            setMovies(result.movies || []);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const clearSearch = () => {
+        setIsSearching(false);
+        setSearchQuery("");
+        setAiReasoning("");
+        setMovies([]);
+        setPage(1);
+        loadMoreMovies(); // Reload feed
     };
 
     return (
         <main className="min-h-screen bg-black text-white p-8 pb-20">
-            <div className="max-w-6xl mx-auto space-y-12">
+            <div className="max-w-7xl mx-auto space-y-8">
 
-                {/* Header */}
-                <header className="text-center space-y-4 pt-10">
-                    <h1 className="text-5xl font-extrabold tracking-tighter">
-                        Screen<span className="bg-gradient-brand">Scout</span>
-                    </h1>
-                    <p className="text-xl text-gray-400">
-                        Tell us what you like. We'll find what you love.
-                    </p>
-                </header>
+                {/* Header & Sticky Search */}
+                <header className="sticky top-0 z-50 bg-black/80 backdrop-blur-md py-4 space-y-4 border-b border-gray-800">
+                    <div className="flex items-center justify-between">
+                        <h1 className="text-3xl font-extrabold tracking-tighter" onClick={clearSearch} role="button">
+                            Screen<span className="bg-gradient-brand">Scout</span>
+                        </h1>
 
-                {/* Search Section */}
-                <section className="max-w-2xl mx-auto">
-                    <form onSubmit={handleSearch} className="flex gap-2 relative">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Search for movies to add..."
-                                className="w-full bg-gray-900 border border-gray-800 rounded-full py-4 pl-12 pr-6 text-lg focus:outline-none focus:ring-2 focus:ring-purple-600 transition-all placeholder:text-gray-600 text-white"
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                            />
+                        {/* Context Badge */}
+                        <div className="flex items-center gap-4">
+                            {selectedIds.length > 0 && (
+                                <div className="bg-green-900/50 text-green-400 px-3 py-1 rounded-full text-xs font-bold border border-green-700 animate-in fade-in">
+                                    {selectedIds.length} Context Selected
+                                </div>
+                            )}
                         </div>
+                    </div>
+
+                    <form onSubmit={handleSearch} className="relative max-w-2xl mx-auto">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder={selectedIds.length > 0 ? "Find something like these, but..." : "Describe your perfect movie..."}
+                            className="w-full bg-gray-900 border border-gray-700 rounded-full py-3 pl-12 pr-12 text-white focus:ring-2 focus:ring-purple-600 focus:outline-none transition-all placeholder:text-gray-500"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                         <button
                             type="submit"
-                            className="bg-white text-black font-bold rounded-full px-8 hover:bg-gray-200 transition-colors disabled:opacity-50"
-                            disabled={searching}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-gradient-brand rounded-full text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                            disabled={loading}
                         >
-                            {searching ? <Loader2 className="animate-spin" /> : "Search"}
+                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                         </button>
                     </form>
+                </header>
+
+                {/* AI Reasoning (Only in Search Mode) */}
+                {isSearching && aiReasoning && (
+                    <section className="bg-gray-900/80 border border-purple-500/30 p-6 rounded-2xl animate-in slide-in-from-top-4">
+                        <h3 className="text-purple-400 font-bold mb-2 text-sm uppercase tracking-wider flex items-center gap-2">
+                            <Sparkles className="w-4 h-4" /> ScreenScout AI
+                        </h3>
+                        <p className="text-lg leading-relaxed text-gray-200">
+                            {aiReasoning}
+                        </p>
+                        <button onClick={clearSearch} className="mt-4 text-xs text-gray-500 hover:text-white underline">
+                            Back to Feed
+                        </button>
+                    </section>
+                )}
+
+                {/* Movie Grid */}
+                <section className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                    {movies.map((movie, idx) => (
+                        <MovieCard
+                            key={`${movie.id}-${idx}`} // Use index fallback if IDs duplicate in infinite scroll
+                            movie={movie}
+                            isSelected={selectedIds.includes(movie.id)}
+                            onSelect={toggleSelection}
+                        />
+                    ))}
                 </section>
 
-                {/* Selected Movies (The Cart) */}
-                {selectedMovies.length > 0 && (
-                    <section className="bg-gray-900/50 p-6 rounded-2xl border border-gray-800 animate-in fade-in slide-in-from-bottom-4">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-semibold flex items-center gap-2">
-                                <Sparkles className="text-yellow-400" />
-                                Your Inspiration ({selectedMovies.length}/5)
-                            </h2>
-                            <button onClick={() => setSelectedMovies([])} className="text-sm text-red-400 hover:text-red-300">Clear</button>
-                        </div>
-                        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
-                            {selectedMovies.map(movie => (
-                                <div key={movie.id} className="min-w-[100px] w-[100px] relative group">
-                                    {/* Small Thumbnail view */}
-                                    <img src={movie.poster_url || "https://placehold.co/100x150"} className="rounded-md w-full h-auto aspect-[2/3] object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-                                    <button
-                                        onClick={() => toggleSelection(movie)}
-                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-md hover:bg-red-600"
-                                    >X</button>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Mood Input & Action */}
-                        <div className="mt-6 flex flex-col md:flex-row gap-4 items-end">
-                            <div className="flex-1 w-full space-y-2">
-                                <label className="text-sm text-gray-400 ml-1">Current Mood (Optional)</label>
-                                <input
-                                    placeholder="e.g. 'Something dark but funny' or 'I want to cry'"
-                                    className="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 transition-colors text-white"
-                                    value={mood}
-                                    onChange={(e) => setMood(e.target.value)}
-                                />
-                            </div>
-                            <button
-                                onClick={handleRecommend}
-                                disabled={loading}
-                                className="w-full md:w-auto bg-gradient-brand text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-purple-900/50 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                                {loading ? <Loader2 className="animate-spin" /> : <><Sparkles className="w-5 h-5" /> Curate For Me</>}
-                            </button>
-                        </div>
-                    </section>
-                )}
-
-                {/* Recommendations Results */}
-                {recommendations && (
-                    <section className="space-y-8 animate-in fade-in">
-                        <div className="bg-gray-900/80 border border-purple-500/30 p-6 rounded-2xl">
-                            <h3 className="text-purple-400 font-bold mb-2 text-sm uppercase tracking-wider">ScreenScout AI</h3>
-                            <p className="text-lg leading-relaxed text-gray-200">
-                                {recommendations.ai_response}
-                            </p>
-                        </div>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                            {recommendations.movies.map(movie => (
-                                <MovieCard
-                                    key={movie.id}
-                                    movie={movie}
-                                    isSelected={selectedMovies.some(m => m.id === movie.id)}
-                                    onSelect={toggleSelection}
-                                />
-                            ))}
-                        </div>
-                    </section>
-                )}
-
-                {/* Search Results (When no recs logic yet or just searching) */}
-                {!recommendations && results.length > 0 && (
-                    <section>
-                        <h2 className="text-2xl font-bold mb-6 text-gray-400">Search Results</h2>
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                            {results.map(movie => (
-                                <MovieCard
-                                    key={movie.id}
-                                    movie={movie}
-                                    isSelected={selectedMovies.some(m => m.id === movie.id)}
-                                    onSelect={toggleSelection}
-                                />
-                            ))}
-                        </div>
-                    </section>
+                {/* Infinite Scroll Loader */}
+                {!isSearching && (
+                    <div ref={loaderRef} className="py-10 flex justify-center w-full">
+                        {loading && <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />}
+                    </div>
                 )}
             </div>
         </main>

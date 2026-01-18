@@ -25,7 +25,8 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
                     onClick={() => onSelect(movie)}
                     className={cn(
                         "group relative overflow-hidden rounded-md border-0 bg-gray-900 cursor-pointer transition-all duration-300",
-                        isSelected ? "ring-2 ring-purple-600 scale-105" : "hover:scale-105 hover:shadow-2xl"
+                        // Updated Visual Cue: Green Ring for Context Selection
+                        isSelected ? "ring-4 ring-green-500 scale-105" : "hover:scale-105 hover:shadow-2xl"
                     )}
                 >
                     <CardContent className="p-0 aspect-[2/3] relative">
