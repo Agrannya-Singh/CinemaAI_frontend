@@ -5,64 +5,76 @@ export interface Movie {
     title: string;
     overview: string;
     poster_url: string | null;
-    release_date?: string;
     score?: number;
-    posterHint?: string;
-    // Make sure these match backend fields for compatibility
-    vote_average?: number;
+}
+
+export interface PaginationMeta {
+    current_page: number;
+    limit: number;
+    total_items: number;
+    total_pages: number;
+}
+
+export interface PaginatedMovies {
+    data: Movie[];
+    meta: PaginationMeta;
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://semantic-recommendation-service.onrender.com';
 
-// 1. Fetch Paginated Movies (Browsing - Infinite Scroll)
-export async function fetchMovies(page: number = 1, limit: number = 24): Promise<Movie[]> {
+// 1. Get All Movies (Paginated)
+export async function getMovies(page: number = 1, limit: number = 24): Promise<PaginatedMovies> {
     try {
         const res = await fetch(`${API_BASE_URL}/movies?page=${page}&limit=${limit}`);
-        if (!res.ok) throw new Error("Failed to load movies");
-        const data = await res.json();
-        return data || []; // Assuming backend returns list directly or data wrapper. Adjust if returns { data: [...] }
+        if (!res.ok) throw new Error("Failed to fetch movies");
+        return await res.json();
     } catch (error) {
         console.error("Fetch Movies Error:", error);
+        return {
+            data: [],
+            meta: { current_page: 1, limit: 24, total_items: 0, total_pages: 0 }
+        };
+    }
+}
+
+// 2. Semantic Search (Uses /recommend endpoint as search engine)
+export async function searchMovies(query: string): Promise<Movie[]> {
+    if (!query) return [];
+    try {
+        const res = await fetch(`${API_BASE_URL}/recommend`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query, selected_movie_ids: [] }),
+        });
+        const data = await res.json();
+        return data.movies || [];
+    } catch (error) {
+        console.error("Search Error:", error);
         return [];
     }
 }
 
-// 2. Hybrid Recommendation (Secure Server-Side RAG)
-// Search + Context
-export async function getRecommendations(query: string, selectedIds: string[] = []) {
-    try {
-        const res = await fetch(`${API_BASE_URL}/recommend-rag`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                selected_titles: [], // Backend might expect titles for prompts, but if we send IDs maybe backend needs update? 
-                // Wait, previous plan said /recommend-rag expects `selected_titles`.
-                // User requirement says `selected_movie_ids`.
-                // I will align with User Requirement "Frontend Update Log".
-                // But my backend `main.py` implementation expects `selected_titles`.
-                // I should assume the USER handled backend and I should send what matches their "Frontend Update Log"
-                // which says: body: { query: query, selected_movie_ids: selectedIds }
-                // ADJUSTMENT: Use the signature requested by User: 
-                // "body: JSON.stringify({ query: query, selected_movie_ids: selectedIds })"
-                // I will trust the user updated the backend to handle this or I should map it.
-                // Let's send structured data that covers both or matches the new backend contract.
-                // The user said: "POST /recommend (The Brain)"
+// 3. RAG Recommendation (Curate Button)
+export async function getRecommendations(selectedMovies: Movie[], mood: string) {
+    const selected_movie_ids = selectedMovies.map(m => m.id);
+    // If mood is present, it becomes the query, otherwise we might just ask for similar movies
+    // The backend expects a 'query' field. 
+    const query = mood || "Recommend movies based on my selection.";
 
-                // I will follow the user's "Frontend Update Log" signature exactly for the fetch URL and body.
-                query: query,
-                selected_movie_ids: selectedIds
-            })
+    try {
+        const res = await fetch(`${API_BASE_URL}/recommend`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query, selected_movie_ids }),
         });
 
-        if (!res.ok) throw new Error("AI Recommendation failed");
-        return res.json();
+        const data = await res.json();
+        return {
+            ai_response: data.ai_reasoning || "Here are your recommendations.",
+            movies: data.movies || []
+        };
     } catch (error) {
         console.error("Recommendation Error:", error);
-        return { ai_response: "AI is currently offline.", movies: [] };
+        return { ai_response: "AI is offline.", movies: [] };
     }
-}
-
-// Legacy support if needed, but we are moving to v3
-export async function searchMovies(query: string): Promise<Movie[]> {
-    return []; // Deprecated in favor of getRecommendations
 }
