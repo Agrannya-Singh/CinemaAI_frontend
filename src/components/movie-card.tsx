@@ -39,10 +39,16 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80 transition-opacity duration-300 group-hover:opacity-90" />
 
-                        <div className="absolute bottom-3 left-3 right-3">
-                            <h3 className="text-white font-bold truncate text-base mb-2 drop-shadow-md">{movie.title}</h3>
+                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent">
+                            <h3 className="text-white font-bold truncate text-lg mb-1 drop-shadow-md">{movie.title}</h3>
+
+                            {/* Description added to card face as requested */}
+                            <p className="text-zinc-300 text-xs line-clamp-2 mb-3 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
+                                {movie.overview || "No description available."}
+                            </p>
+
                             <div className="flex items-center justify-between text-xs text-white/90">
-                                <div className="flex items-center gap-1.5 bg-black/60 px-2.5 py-1 rounded-full backdrop-blur-sm border border-white/10">
+                                <div className="flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-md border border-white/10">
                                     <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
                                     <span className="font-medium text-yellow-50">
                                         {movie.score
@@ -56,11 +62,9 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
                 </Card>
             </TooltipTrigger>
             <TooltipContent>
-                <div className="bg-zinc-900 text-white p-3 text-xs rounded-lg border border-zinc-800 shadow-xl max-w-[300px]">
-                    <div className="font-bold mb-1 text-base">{movie.title}</div>
-                    <p className="text-zinc-400 leading-relaxed line-clamp-6">
-                        {movie.overview || "No description available."}
-                    </p>
+                <div className="bg-zinc-900 text-white p-2.5 text-xs rounded-lg border border-zinc-800 shadow-xl">
+                    {/* Simplified tooltip just for title if needed, or remove completely if description is on card */}
+                    {movie.title}
                 </div>
             </TooltipContent>
         </Tooltip>
