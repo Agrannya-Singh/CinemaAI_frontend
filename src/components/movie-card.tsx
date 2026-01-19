@@ -1,95 +1,72 @@
-
-'use client';
-
-import Image from 'next/image';
-import { Movie } from '@/lib/movies';
-import { cn } from '@/lib/utils';
-import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle2, Star, PlusCircle } from 'lucide-react';
-import { useState } from 'react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Movie } from "@/lib/movies";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Star } from "lucide-react";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface MovieCardProps {
-  movie: Movie;
-  isSelected: boolean;
-  onSelect: (movie: Movie) => void;
+    movie: Movie;
+    isSelected: boolean;
+    onSelect: (movie: Movie) => void;
 }
 
 export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
-  const [imageError, setImageError] = useState(false);
+    const [imageError, setImageError] = useState(false);
 
-  const handleImageError = () => {
-    setImageError(true);
-  };
-  
-  const isValidUrl = (url: string) => {
-    try {
-      new URL(url);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  };
-  
-  const posterSrc = imageError || !movie.poster || !isValidUrl(movie.poster) ? 'https://placehold.co/300x450.png' : movie.poster;
+    const posterSrc = imageError || !movie.poster_url
+        ? 'https://placehold.co/300x450.png?text=No+Poster'
+        : movie.poster_url;
 
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Card
-          onClick={() => onSelect(movie)}
-          className={cn(
-            'cursor-pointer group overflow-hidden relative transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/20 bg-card border-border',
-            isSelected ? 'ring-2 ring-primary ring-offset-4 ring-offset-background' : 'hover:ring-2 hover:ring-primary/50'
-          )}
-        >
-          <CardContent className="p-0 flex-grow flex flex-col">
-            <div className="aspect-[2/3] relative w-full">
-              <Image
-                src={posterSrc}
-                alt={`${movie.title} poster`}
-                fill
-                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-                data-ai-hint={movie.posterHint}
-                onError={handleImageError}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Card
+                    onClick={() => onSelect(movie)}
+                    className={cn(
+                        "group relative overflow-hidden rounded-xl border border-white/10 bg-gray-900 cursor-pointer transition-all duration-500 ease-out",
+                        isSelected
+                            ? "ring-2 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)] scale-105"
+                            : "hover:scale-105 hover:shadow-2xl hover:shadow-black/50"
+                    )}
+                >
+                    <CardContent className="p-0 aspect-[2/3] relative">
+                        <img
+                            src={posterSrc}
+                            alt={movie.title}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            onError={() => setImageError(true)}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80 transition-opacity duration-300 group-hover:opacity-90" />
 
-              {isSelected ? (
-                <div className="absolute inset-0 bg-black/70 flex items-center justify-center backdrop-blur-sm">
-                  <CheckCircle2 className="h-12 w-12 text-primary" />
+                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent">
+                            <h3 className="text-white font-bold truncate text-lg mb-1 drop-shadow-md">{movie.title}</h3>
+
+                            {/* Description added to card face as requested */}
+                            <p className="text-zinc-300 text-xs line-clamp-2 mb-3 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
+                                {movie.overview || "No description available."}
+                            </p>
+
+                            <div className="flex items-center justify-between text-xs text-white/90">
+                                <div className="flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-md border border-white/10">
+                                    <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                                    <span className="font-medium text-yellow-50">
+                                        {movie.score
+                                            ? `${movie.score.toFixed(1)}/10`
+                                            : (movie.release_date?.split('-')[0] || 'N/A')}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </TooltipTrigger>
+            <TooltipContent>
+                <div className="bg-zinc-900 text-white p-2.5 text-xs rounded-lg border border-zinc-800 shadow-xl">
+                    {/* Simplified tooltip just for title if needed, or remove completely if description is on card */}
+                    {movie.title}
                 </div>
-              ) : (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-sm">
-                  <PlusCircle className="h-12 w-12 text-white/80" />
-                </div>
-              )}
-
-              <div className="absolute bottom-2 left-2 right-2">
-                <h3 className="text-white font-bold text-base truncate shadow-black [text-shadow:_1px_1px_2px_var(--tw-shadow-color)]">
-                  {movie.title}
-                </h3>
-                <div className="flex items-center justify-between text-xs text-white/80 mt-1">
-                    <p>{movie.year}</p>
-                    <div className="flex items-center gap-1">
-                        <Star className="w-3 h-3 text-yellow-400" />
-                        <span>{movie.rating ? movie.rating.toFixed(1) : 'N/A'}</span>
-                    </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </TooltipTrigger>
-      <TooltipContent side="bottom" align="start" className="max-w-xs text-sm">
-        <p className="font-bold text-base mb-2">{movie.title} ({movie.year})</p>
-        <p className="text-muted-foreground">{movie.overview}</p>
-      </TooltipContent>
-    </Tooltip>
-  );
+            </TooltipContent>
+        </Tooltip>
+    );
 }
