@@ -1,14 +1,74 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Movie, searchMovies, getRecommendations, getMovies } from "@/lib/movies";
 import { MovieCard } from "@/components/movie-card";
-import { Loader2, Sparkles, Search, TrendingUp } from "lucide-react";
+import { Loader2, Sparkles, Search, TrendingUp, ChevronRight, ChevronLeft } from "lucide-react";
+
+// --- Components ---
+
+// Horizontal Scroll Row
+function MovieRow({ title, movies, onSelect, selectedIds }: { title: string, movies: Movie[], onSelect: (m: Movie) => void, selectedIds: string[] }) {
+    const rowRef = useRef<HTMLDivElement>(null);
+
+    const scroll = (direction: 'left' | 'right') => {
+        if (rowRef.current) {
+            const { current } = rowRef;
+            const scrollAmount = direction === 'left' ? -window.innerWidth / 2 : window.innerWidth / 2;
+            current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+    };
+
+    if (movies.length === 0) return null;
+
+    return (
+        <div className="space-y-4 py-4 group/row">
+            <h2 className="text-2xl font-bold text-gray-100 flex items-center gap-2 px-4 md:px-0">
+                {title} <ChevronRight className="w-5 h-5 text-gray-500 opacity-0 group-hover/row:opacity-100 transition-opacity" />
+            </h2>
+            <div className="relative group/slider">
+                <button
+                    onClick={() => scroll('left')}
+                    className="absolute left-0 top-0 bottom-0 z-10 bg-black/50 hover:bg-black/80 w-12 flex items-center justify-center opacity-0 group-hover/slider:opacity-100 transition-opacity duration-300"
+                >
+                    <ChevronLeft className="w-8 h-8" />
+                </button>
+
+                <div
+                    ref={rowRef}
+                    className="flex gap-4 overflow-x-auto pb-4 px-4 md:px-0 scrollbar-hide scroll-smooth snap-x"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                    {movies.map((movie) => (
+                        <div key={movie.id} className="min-w-[160px] md:min-w-[200px] snap-start">
+                            <MovieCard
+                                movie={movie}
+                                isSelected={selectedIds.includes(movie.id)}
+                                onSelect={onSelect}
+                            />
+                        </div>
+                    ))}
+                </div>
+
+                <button
+                    onClick={() => scroll('right')}
+                    className="absolute right-0 top-0 bottom-0 z-10 bg-black/50 hover:bg-black/80 w-12 flex items-center justify-center opacity-0 group-hover/slider:opacity-100 transition-opacity duration-300"
+                >
+                    <ChevronRight className="w-8 h-8" />
+                </button>
+            </div>
+        </div>
+    );
+}
+
 
 export default function Home() {
-    // State
+    // Data State
+    const [allMovies, setAllMovies] = useState<Movie[]>([]); // Full 950+ DB
+    const [groupedMovies, setGroupedMovies] = useState<{ [genre: string]: Movie[] }>({});
+
+    // UI State
     const [query, setQuery] = useState("");
-    const [movies, setMovies] = useState<Movie[]>([]); // Initial Feed
     const [results, setResults] = useState<Movie[]>([]); // Search Results
     const [selectedMovies, setSelectedMovies] = useState<Movie[]>([]);
     const [mood, setMood] = useState("");
@@ -19,20 +79,66 @@ export default function Home() {
     const [searching, setSearching] = useState(false);
     const [loadingFeed, setLoadingFeed] = useState(true);
 
-    // Initial Load (Trending Movies)
+    // Initial Load (Fetch ALL)
     useEffect(() => {
-        async function fetchInitialMovies() {
+        async function fetchAll() {
             try {
-                const data = await getMovies(1, 24);
-                setMovies(data.data);
+                // Fetch limit=1000 to get everything
+                const data = await getMovies(1, 1000);
+                setAllMovies(data.data);
+                processGenres(data.data);
             } catch (e) {
-                console.error("Failed to load feed", e);
+                console.error("Failed to load DB", e);
             } finally {
                 setLoadingFeed(false);
             }
         }
-        fetchInitialMovies();
+        fetchAll();
     }, []);
+
+    // Genre Processing Logic
+    const processGenres = (movies: Movie[]) => {
+        const groups: { [key: string]: Movie[] } = {};
+
+        // 1. Top Rated Group
+        groups["Top Rated"] = movies.filter(m => (m.vote_average || 0) >= 8.0).slice(0, 20);
+
+        // 2. Discover (Random / Recent)
+        groups["Discover"] = movies.slice(0, 20); // First 20 as they are sorted by popularity often
+
+        // 3. Genre Groups
+        movies.forEach(movie => {
+            if (movie.genres) {
+                // Handle different potential delimiters
+                let genreList: string[] = [];
+                if (typeof movie.genres === 'string') {
+                    // Check if it's JSON array string or comma separated
+                    if (movie.genres.startsWith('[')) {
+                        try {
+                            const parsed = JSON.parse(movie.genres.replace(/'/g, '"')); // Python list support
+                            if (Array.isArray(parsed)) genreList = parsed;
+                        } catch (e) {
+                            // Fallback for simple string
+                            genreList = movie.genres.replace(/[\[\]']/g, "").split(", ");
+                        }
+                    } else {
+                        genreList = movie.genres.split(", ");
+                    }
+                }
+
+                genreList.forEach(g => {
+                    const genre = g.trim();
+                    if (!groups[genre]) groups[genre] = [];
+                    if (groups[genre].length < 20) { // Limit rows for performance
+                        groups[genre].push(movie);
+                    }
+                });
+            }
+        });
+
+        // Ensure we prioritize specific rows order
+        setGroupedMovies(groups);
+    };
 
     // Search Logic
     const handleSearch = async (e: React.FormEvent) => {
@@ -66,8 +172,7 @@ export default function Home() {
         }
         setLoadingRecs(true);
         setRecommendations(null);
-        setResults([]); // Clear search results to focus on recs
-        // If mood is empty, we pass it as is.
+        setResults([]);
         const data = await getRecommendations(selectedMovies, mood);
         setRecommendations(data);
         setLoadingRecs(false);
@@ -78,12 +183,14 @@ export default function Home() {
     const showSearchResults = !showRecommendations && results.length > 0;
     const showFeed = !showRecommendations && !showSearchResults;
 
+    const genreOrder = ["Top Rated", "Discover", "Action", "Science Fiction", "Adventure", "Crime", "Comedy", "Drama", "Thriller", "Horror", "Animation"];
+
     return (
-        <main className="min-h-screen bg-black text-white p-8 pb-20">
-            <div className="max-w-6xl mx-auto space-y-12">
+        <main className="min-h-screen bg-black text-white p-8 pb-20 overflow-x-hidden">
+            <div className="max-w-[1600px] mx-auto space-y-12">
 
                 {/* Header */}
-                <header className="text-center space-y-4 pt-10">
+                <header className="text-center space-y-4 pt-10 px-4">
                     <h1 className="text-5xl font-extrabold tracking-tighter">
                         Screen<span className="bg-gradient-brand">Scout</span>
                     </h1>
@@ -93,7 +200,7 @@ export default function Home() {
                 </header>
 
                 {/* Search Section */}
-                <section className="max-w-2xl mx-auto">
+                <section className="max-w-2xl mx-auto px-4 z-20 relative">
                     <form onSubmit={handleSearch} className="flex gap-2 relative">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -117,7 +224,7 @@ export default function Home() {
 
                 {/* Selected Movies Bar */}
                 {selectedMovies.length > 0 && (
-                    <section className="bg-gray-900/50 p-6 rounded-2xl border border-gray-800 animate-in fade-in slide-in-from-bottom-4">
+                    <section className="bg-gray-900/50 p-6 rounded-2xl border border-gray-800 animate-in fade-in slide-in-from-bottom-4 mx-4">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-xl font-semibold flex items-center gap-2">
                                 <Sparkles className="text-yellow-400" />
@@ -165,7 +272,7 @@ export default function Home() {
 
                 {/* 1. Recommendations Mode */}
                 {showRecommendations && recommendations && (
-                    <section className="space-y-8 animate-in fade-in">
+                    <section className="space-y-8 animate-in fade-in px-4">
                         <div className="bg-gray-900/80 border border-purple-500/30 p-6 rounded-2xl">
                             <h3 className="text-purple-400 font-bold mb-2 text-sm uppercase tracking-wider">ScreenScout AI</h3>
                             <p className="text-lg leading-relaxed text-gray-200">
@@ -173,7 +280,7 @@ export default function Home() {
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                             {recommendations.movies.map(movie => (
                                 <MovieCard
                                     key={movie.id}
@@ -188,9 +295,9 @@ export default function Home() {
 
                 {/* 2. Search Results Mode */}
                 {showSearchResults && (
-                    <section>
+                    <section className="px-4">
                         <h2 className="text-2xl font-bold mb-6 text-gray-400">Search Results</h2>
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                             {results.map(movie => (
                                 <MovieCard
                                     key={movie.id}
@@ -203,27 +310,41 @@ export default function Home() {
                     </section>
                 )}
 
-                {/* 3. Trending Feed Mode (Default) */}
+                {/* 3. Browse Mode (Netflix Style) */}
                 {showFeed && (
-                    <section>
-                        <h2 className="text-2xl font-bold mb-6 text-gray-400 flex items-center gap-2">
-                            <TrendingUp className="text-purple-500" /> Trending & Top Rated
-                        </h2>
+                    <section className="space-y-12 pb-20 pl-4">
                         {loadingFeed ? (
-                            <div className="flex justify-center py-20">
-                                <Loader2 className="animate-spin w-10 h-10 text-purple-600" />
+                            <div className="flex justify-center py-40">
+                                <Loader2 className="animate-spin w-12 h-12 text-purple-600" />
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                                {movies.map(movie => (
-                                    <MovieCard
-                                        key={movie.id}
-                                        movie={movie}
-                                        isSelected={selectedMovies.some(m => m.id === movie.id)}
+                            <>
+                                {/* Render Prioritized IDs first */}
+                                {genreOrder.map(genre => groupedMovies[genre] && (
+                                    <MovieRow
+                                        key={genre}
+                                        title={genre}
+                                        movies={groupedMovies[genre]}
+                                        selectedIds={selectedMovies.map(m => m.id)}
                                         onSelect={toggleSelection}
                                     />
                                 ))}
-                            </div>
+
+                                {/* Render Remaining Genres */}
+                                {Object.keys(groupedMovies)
+                                    .filter(g => !genreOrder.includes(g) && groupedMovies[g].length > 4) // Filter out tiny categories
+                                    .sort()
+                                    .map(genre => (
+                                        <MovieRow
+                                            key={genre}
+                                            title={genre}
+                                            movies={groupedMovies[genre]}
+                                            selectedIds={selectedMovies.map(m => m.id)}
+                                            onSelect={toggleSelection}
+                                        />
+                                    ))
+                                }
+                            </>
                         )}
                     </section>
                 )}

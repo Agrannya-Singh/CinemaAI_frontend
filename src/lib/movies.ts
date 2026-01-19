@@ -4,6 +4,8 @@ export interface Movie {
     id: string;
     title: string;
     overview: string;
+    today?: string;
+    genres?: string; // Comma separated string from DB
     poster_url: string | null;
     score?: number;
     release_date?: string;
