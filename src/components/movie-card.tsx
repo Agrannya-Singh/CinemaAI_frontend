@@ -24,28 +24,29 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
                 <Card
                     onClick={() => onSelect(movie)}
                     className={cn(
-                        "group relative overflow-hidden rounded-md border-0 bg-gray-900 cursor-pointer transition-all duration-300",
-                        // Updated Visual Cue: Green Ring for Context Selection
-                        isSelected ? "ring-4 ring-green-500 scale-105" : "hover:scale-105 hover:shadow-2xl"
+                        "group relative overflow-hidden rounded-xl border border-white/10 bg-gray-900 cursor-pointer transition-all duration-500 ease-out",
+                        isSelected
+                            ? "ring-2 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)] scale-105"
+                            : "hover:scale-105 hover:shadow-2xl hover:shadow-black/50"
                     )}
                 >
                     <CardContent className="p-0 aspect-[2/3] relative">
                         <img
                             src={posterSrc}
                             alt={movie.title}
-                            className="w-full h-full object-cover transition-opacity duration-300"
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             onError={() => setImageError(true)}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-100" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80 transition-opacity duration-300 group-hover:opacity-90" />
 
-                        <div className="absolute bottom-2 left-2 right-2">
-                            <h3 className="text-white font-bold truncate text-sm">{movie.title}</h3>
-                            <div className="flex items-center justify-between text-xs text-white/80 mt-1">
-                                <div className="flex items-center gap-1">
-                                    <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                                    <span>
+                        <div className="absolute bottom-3 left-3 right-3">
+                            <h3 className="text-white font-bold truncate text-base mb-2 drop-shadow-md">{movie.title}</h3>
+                            <div className="flex items-center justify-between text-xs text-white/90">
+                                <div className="flex items-center gap-1.5 bg-black/60 px-2.5 py-1 rounded-full backdrop-blur-sm border border-white/10">
+                                    <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                                    <span className="font-medium text-yellow-50">
                                         {movie.score
-                                            ? `${(movie.score * 100).toFixed(0)}% Match`
+                                            ? `${movie.score.toFixed(1)}/10`
                                             : (movie.release_date?.split('-')[0] || 'N/A')}
                                     </span>
                                 </div>
@@ -55,7 +56,7 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
                 </Card>
             </TooltipTrigger>
             <TooltipContent>
-                <div className="bg-black text-white p-2 text-xs rounded border border-gray-700">
+                <div className="bg-zinc-900 text-white p-2.5 text-xs rounded-lg border border-zinc-800 shadow-xl">
                     {movie.title}
                 </div>
             </TooltipContent>
