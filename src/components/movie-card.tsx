@@ -56,8 +56,11 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
                 </Card>
             </TooltipTrigger>
             <TooltipContent>
-                <div className="bg-zinc-900 text-white p-2.5 text-xs rounded-lg border border-zinc-800 shadow-xl">
-                    {movie.title}
+                <div className="bg-zinc-900 text-white p-3 text-xs rounded-lg border border-zinc-800 shadow-xl max-w-[300px]">
+                    <div className="font-bold mb-1 text-base">{movie.title}</div>
+                    <p className="text-zinc-400 leading-relaxed line-clamp-6">
+                        {movie.overview || "No description available."}
+                    </p>
                 </div>
             </TooltipContent>
         </Tooltip>
