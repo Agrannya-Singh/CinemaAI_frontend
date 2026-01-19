@@ -6,6 +6,7 @@ export interface Movie {
     overview: string;
     poster_url: string | null;
     score?: number;
+    release_date?: string;
 }
 
 export interface PaginationMeta {
