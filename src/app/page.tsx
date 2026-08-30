@@ -317,12 +317,12 @@ export default function Home() {
                 </div>
 
                 <div className="flex items-center gap-6 w-full md:w-auto">
-                    <form onSubmit={handleSearch} className="flex relative w-full md:w-72 lg:w-96">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-cyan-500/50 w-4 h-4" />
+                    <form onSubmit={handleSearch} className="flex relative w-full md:w-72 lg:w-96 group">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-cyan-500 font-mono text-sm animate-pulse">{">"}</span>
                         <input
                             type="text"
-                            placeholder="Search parameters..."
-                            className="w-full bg-black/60 border border-cyan-500/30 py-2 pl-10 pr-12 text-sm font-mono focus:outline-none focus:border-cyan-400/80 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] transition-all placeholder:text-cyan-800/60 text-cyan-100"
+                            placeholder="Search_parameters..."
+                            className="w-full bg-black/60 border border-cyan-500/30 rounded-none py-2 pl-8 pr-10 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all text-cyan-50 font-mono text-sm placeholder:text-cyan-800/50"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                         />
@@ -371,52 +371,56 @@ export default function Home() {
                                     </span>
                                 )}
                             </div>
-                            <h2 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase font-mono text-white text-glow leading-none drop-shadow-2xl tracking-tighter">
-                                {featuredMovie.title}
-                            </h2>
-                            <p className="text-cyan-50/80 text-sm md:text-base font-mono max-w-2xl line-clamp-3 md:line-clamp-4 leading-relaxed drop-shadow-md border-l-2 border-cyan-500/30 pl-4">
-                                {featuredMovie.overview}
-                            </p>
-                            
-                            <div className="flex flex-wrap items-center gap-4 pt-4">
-                                <button 
-                                    onClick={() => toggleSelection(featuredMovie)} 
-                                    className={`flex items-center gap-2 font-mono font-bold py-3 px-8 uppercase tracking-widest transition-all ${
-                                        isSelected 
-                                        ? 'bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.3)]' 
-                                        : 'btn-suggest border border-cyan-400/60 text-cyan-400 hover:text-black shadow-[0_0_15px_rgba(6,182,212,0.3)] bg-black/40 backdrop-blur-sm hover:bg-cyan-400'
-                                    }`}
-                                >
-                                    {isSelected ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-                                    {isSelected ? 'Input Logged' : 'Log Input'}
-                                </button>
-                                
-                                <a 
-                                    href={`https://www.imdb.com/title/${featuredMovie.id}/`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 bg-black/60 border border-cyan-500/30 text-cyan-100 hover:text-cyan-400 font-mono font-bold py-3 px-8 uppercase tracking-widest transition-colors hover:border-cyan-400 hover:bg-black/80 backdrop-blur-sm shadow-[0_0_10px_rgba(0,0,0,0.5)]"
-                                >
-                                    <Info className="w-5 h-5" />
-                                    Database Info
-                                </a>
-                            </div>
-                        </div>
-
-                        {/* Right: Sharp Poster Image (Desktop only) */}
-                        <div className="hidden md:block shrink-0 relative mr-4 lg:mr-12 xl:mr-24 perspective-1000">
-                            <div 
-                                className="w-[240px] lg:w-[320px] xl:w-[360px] aspect-[2/3] relative transform group-hover:scale-[1.02] transition-all duration-700 shadow-[0_0_50px_rgba(6,182,212,0.25)] border border-cyan-500/40 bg-black"
-                                style={{ transform: 'perspective(1000px) rotateY(-12deg)' }}
+                            <h2 
+                            className="text-5xl md:text-7xl lg:text-8xl font-black uppercase font-mono text-white text-glow leading-none drop-shadow-2xl tracking-tighter glitch-wrapper"
+                            data-text={featuredMovie.title}
+                        >
+                            {featuredMovie.title}
+                        </h2>
+                        <p className="text-cyan-50/80 text-sm md:text-base font-mono max-w-2xl line-clamp-3 md:line-clamp-4 leading-relaxed drop-shadow-md border-l-2 border-cyan-500/30 pl-4">
+                            {featuredMovie.overview}
+                        </p>
+                        
+                        <div className="flex flex-wrap items-center gap-4 pt-4">
+                            <button 
+                                onClick={() => toggleSelection(featuredMovie)} 
+                                className={`flex items-center gap-2 font-mono font-bold py-3 px-8 uppercase tracking-widest transition-all ${
+                                    isSelected 
+                                    ? 'bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.3)]' 
+                                    : 'btn-suggest border border-cyan-400/60 text-cyan-400 hover:text-black shadow-[0_0_15px_rgba(6,182,212,0.3)] bg-black/40 backdrop-blur-sm'
+                                }`}
                             >
-                                <img 
-                                    src={featuredMovie.poster_url || "https://placehold.co/600x900?text=No+Image"} 
-                                    alt={featuredMovie.title}
-                                    className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-                                />
-                                <CornerPolygons />
-                                <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 to-transparent pointer-events-none mix-blend-screen opacity-50"></div>
-                            </div>
+                                {isSelected ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                                {isSelected ? 'Input Logged' : 'Log Input'}
+                            </button>
+                            
+                            <a 
+                                href={`https://www.imdb.com/title/${featuredMovie.id}/`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 bg-black/60 border border-cyan-500/30 text-cyan-100 hover:text-cyan-400 font-mono font-bold py-3 px-8 uppercase tracking-widest transition-colors hover:border-cyan-400 hover:bg-black/80 backdrop-blur-sm shadow-[0_0_10px_rgba(0,0,0,0.5)]"
+                            >
+                                <Info className="w-5 h-5" />
+                                Database Info
+                            </a>
+                        </div>
+                    </div>
+
+                    {/* Right: Sharp Poster Image (Desktop only) */}
+                    <div className="hidden md:block shrink-0 relative mr-4 lg:mr-12 xl:mr-24 perspective-1000">
+                        <div 
+                            className="w-[240px] lg:w-[320px] xl:w-[360px] aspect-[2/3] relative transform group-hover:scale-[1.02] transition-all duration-700 shadow-[0_0_50px_rgba(6,182,212,0.25)] border border-cyan-500/40 bg-black overflow-hidden"
+                            style={{ transform: 'perspective(1000px) rotateY(-12deg)' }}
+                        >
+                            <img 
+                                src={featuredMovie.poster_url || "https://placehold.co/600x900?text=No+Image"} 
+                                alt={featuredMovie.title}
+                                className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                            />
+                            <CornerPolygons />
+                            <div className="scanner-line"></div>
+                            <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 to-transparent pointer-events-none mix-blend-screen opacity-50"></div>
+                        </div>
                         </div>
 
                     </div>
@@ -428,8 +432,8 @@ export default function Home() {
 
                 {/* Selected Movies Dock (Visible only if items selected) */}
                 {selectedMovies.length > 0 && (
-                    <section className={`bg-black/95 p-6 border border-cyan-500/40 shadow-[0_0_30px_rgba(6,182,212,0.2)] relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 ${isMainFeedActive ? 'mx-6 md:mx-12 mb-12' : 'mx-0 mb-12'}`}>
-                        <CornerPolygons />
+                    <section className={`tron-panel p-6 shadow-[0_0_30px_rgba(6,182,212,0.2)] relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 ${isMainFeedActive ? 'mx-6 md:mx-12 mb-12' : 'mx-0 mb-12'}`}>
+                        <div className="tron-panel-accent"></div>
                         <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-cyan-500/10 via-cyan-400/80 to-cyan-500/10"></div>
 
                         <div className="flex items-center justify-between mb-5 relative z-10">
@@ -444,7 +448,7 @@ export default function Home() {
                             </div>
                             <button 
                                 onClick={() => setSelectedMovies([])} 
-                                className="text-xs font-mono text-red-500/80 hover:text-red-400 transition-colors uppercase tracking-widest border border-red-500/20 px-4 py-1.5 hover:border-red-400/50 bg-red-950/20 hover:bg-red-900/30"
+                                className="text-xs font-mono text-red-500/80 hover:text-red-400 transition-colors uppercase tracking-widest border border-red-500/20 px-4 py-1.5 hover:border-red-400/50 bg-red-950/20 hover:bg-red-900/30 text-glow-red"
                             >
                                 Terminate
                             </button>
@@ -452,17 +456,18 @@ export default function Home() {
                         
                         <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: 'none' }}>
                             {selectedMovies.map(movie => (
-                                <div key={movie.id} className="min-w-[100px] w-[100px] relative group">
-                                    <div className="border border-cyan-500/30 overflow-hidden relative hover:border-cyan-400 transition-colors shadow-lg">
+                                <div key={movie.id} className="min-w-[100px] w-[100px] relative group cursor-pointer">
+                                    <div className="border border-cyan-500/30 overflow-hidden relative hover:border-cyan-400 transition-colors shadow-lg group-hover:shadow-[0_0_15px_rgba(6,182,212,0.5)]">
                                         <img
                                             src={movie.poster_url || "https://placehold.co/100x150?text=No+Image"}
                                             alt={movie.title}
                                             className="w-full h-auto aspect-[2/3] object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                                         />
+                                        <div className="absolute inset-0 bg-cyan-500/10 mix-blend-screen opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                     </div>
                                     <button
                                         onClick={() => toggleSelection(movie)}
-                                        className="absolute -top-2 -right-2 bg-black border border-cyan-500 text-cyan-400 w-6 h-6 flex items-center justify-center text-xs font-mono hover:bg-red-500 hover:border-red-500 hover:text-white transition-colors z-20 shadow-md"
+                                        className="absolute -top-2 -right-2 bg-black border border-cyan-500 text-cyan-400 w-6 h-6 flex items-center justify-center text-xs font-mono hover:bg-red-500 hover:border-red-500 hover:text-white transition-colors z-20 shadow-[0_0_10px_rgba(6,182,212,0.5)]"
                                     >✕</button>
                                 </div>
                             ))}
@@ -476,17 +481,20 @@ export default function Home() {
                                     <span className="w-1.5 h-1.5 bg-cyan-500 inline-block animate-pulse"></span>
                                     Modify Parameter Vector (Optional)
                                 </label>
-                                <input
-                                    placeholder="e.g. 'More action, less dialogue'"
-                                    className="w-full bg-black/80 border border-cyan-500/20 px-4 py-3 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)] transition-all text-cyan-50 font-mono text-sm placeholder:text-cyan-800/40"
-                                    value={mood}
-                                    onChange={(e) => setMood(e.target.value)}
-                                />
+                                <div className="relative group">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-cyan-500 font-mono text-sm">{">"}</span>
+                                    <input
+                                        placeholder="e.g. 'More action, less dialogue'"
+                                        className="w-full bg-black/80 border border-cyan-500/30 pl-8 pr-4 py-3 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all text-cyan-50 font-mono text-sm placeholder:text-cyan-800/50"
+                                        value={mood}
+                                        onChange={(e) => setMood(e.target.value)}
+                                    />
+                                </div>
                             </div>
                             <button
                                 onClick={handleRecommend}
                                 disabled={loadingRecs}
-                                className="btn-suggest w-full md:w-auto border border-cyan-400/80 text-cyan-300 font-mono font-bold py-3 px-12 transition-all disabled:opacity-50 flex items-center justify-center gap-3 uppercase tracking-[0.2em] text-sm hover:bg-cyan-400 hover:text-black shadow-[0_0_15px_rgba(6,182,212,0.2)]"
+                                className="btn-suggest w-full md:w-auto border border-cyan-400/80 text-cyan-300 font-mono font-bold py-3 px-12 transition-all disabled:opacity-50 flex items-center justify-center gap-3 uppercase tracking-[0.2em] text-sm hover:text-black shadow-[0_0_15px_rgba(6,182,212,0.2)]"
                             >
                                 {loadingRecs ? <Loader2 className="animate-spin w-5 h-5" /> : (
                                     <span className="flex items-center gap-2">
