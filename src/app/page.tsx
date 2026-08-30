@@ -40,7 +40,7 @@ flowchart TB
 
     subgraph Ops [Testing & Operations Tooling]
         RenderMCP[["Render MCP Server<br/>(AI CLI Management)"]]:::tooling
-        MVCJudge["Future MVC Server<br/>(LLM-as-a-Judge Eval)"]:::tooling
+        MCPJudge["MCP Server<br/>(LLM-as-a-Judge Eval)"]:::tooling
         AI((AI Assistant))
     end
 
@@ -58,7 +58,7 @@ flowchart TB
     %% Tooling Flow
     AI -.->|Execute Commands| RenderMCP
     RenderMCP -.->|Deploy/Monitor| Dev
-    MVCJudge -.->|Automated Evals| Dev
+    MCPJudge -.->|Automated Evals| Dev
 `;
 
 
@@ -311,8 +311,8 @@ export default function Home() {
                         <span className="text-white/90 drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]">SCOUT</span>
                     </h1>
                     <div className="hidden lg:flex items-center gap-6 text-xs font-mono text-cyan-100/70 uppercase tracking-widest">
-                        <button className="hover:text-cyan-400 hover:text-glow transition-all" onClick={() => { setResults([]); setRecommendations(null); setQuery(""); }}>Home</button>
-                        <button className="hover:text-cyan-400 hover:text-glow transition-all" onClick={() => setShowArchModal(true)}>Discover</button>
+                        <button className="hover:text-cyan-400 hover:text-glow transition-all" onClick={() => { window.location.href = '/'; }}>Home</button>
+                        <button className="hover:text-cyan-400 hover:text-glow transition-all" onClick={() => setShowArchModal(true)}>Architecture</button>
                     </div>
                 </div>
 
