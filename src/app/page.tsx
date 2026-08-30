@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Movie, searchMovies, getRecommendations, getMovies } from "@/lib/movies";
 import { MovieCard } from "@/components/movie-card";
 import { MermaidDiagram } from "@/components/mermaid";
-import { Loader2, Search, ChevronRight, ChevronLeft, Info, Plus, Check } from "lucide-react";
+import { Loader2, Search, ChevronRight, ChevronLeft, Info, Plus, Check, X } from "lucide-react";
 
 const architectureDiagram = `
 flowchart TB
@@ -181,6 +181,7 @@ export default function Home() {
     const [loadingFeed, setLoadingFeed] = useState(true);
 
     const [scrolled, setScrolled] = useState(false);
+    const [showArchModal, setShowArchModal] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -311,7 +312,7 @@ export default function Home() {
                     </h1>
                     <div className="hidden lg:flex items-center gap-6 text-xs font-mono text-cyan-100/70 uppercase tracking-widest">
                         <button className="hover:text-cyan-400 hover:text-glow transition-all" onClick={() => { setResults([]); setRecommendations(null); setQuery(""); }}>Home</button>
-                        <button className="hover:text-cyan-400 hover:text-glow transition-all">Discover</button>
+                        <button className="hover:text-cyan-400 hover:text-glow transition-all" onClick={() => setShowArchModal(true)}>Discover</button>
                     </div>
                 </div>
 
@@ -591,21 +592,30 @@ export default function Home() {
                     </section>
                 )}
 
-                {/* 4. Architecture Showcase Section */}
-                <section className="mt-20 pt-10 border-t border-cyan-500/20 px-6 md:px-12 pb-10">
-                    <div className="flex items-center gap-3 mb-8 justify-center">
-                        <HexagonIcon className="w-6 h-6 text-cyan-400" />
-                        <h2 className="text-2xl font-mono font-bold text-cyan-100 uppercase tracking-widest text-glow">
-                            System Architecture
-                        </h2>
+                {/* Architecture Modal (triggered from Discover in nav) */}
+                {showArchModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setShowArchModal(false)}>
+                        <div className="relative w-full max-w-5xl max-h-[90vh] mx-4 overflow-auto bg-black/95 border border-cyan-500/30 shadow-[0_0_60px_rgba(6,182,212,0.2)] p-8 md:p-12" onClick={e => e.stopPropagation()}>
+                            <button
+                                onClick={() => setShowArchModal(false)}
+                                className="absolute top-4 right-4 text-cyan-400 hover:text-white transition-colors z-10"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+
+                            <div className="flex items-center gap-3 mb-6">
+                                <HexagonIcon className="w-6 h-6 text-cyan-400" />
+                                <h2 className="text-xl md:text-2xl font-mono font-bold text-cyan-100 uppercase tracking-widest text-glow">
+                                    System Architecture
+                                </h2>
+                            </div>
+                            <p className="text-cyan-500/70 font-mono mb-8 text-xs md:text-sm border-l-2 border-cyan-500/30 pl-4">
+                                Semantic Recommendation Service — Production, Dev, and AI persistence layers.
+                            </p>
+                            <MermaidDiagram chart={architectureDiagram} />
+                        </div>
                     </div>
-                    <p className="text-cyan-500/70 font-mono text-center max-w-2xl mx-auto mb-10 text-sm">
-                        Semantic Recommendation Service Infrastructure showing Production, Dev, and AI persistence layers.
-                    </p>
-                    <div className="max-w-4xl mx-auto">
-                        <MermaidDiagram chart={architectureDiagram} />
-                    </div>
-                </section>
+                )}
             </div>
         </main>
     );
