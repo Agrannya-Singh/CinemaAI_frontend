@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import type { ApiMovie } from '@/lib/movies';
+import type { Movie } from '@/lib/movies';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://sreenscount-rag-bmhxbshag6gdfeb8.southeastasia-01.azurewebsites.net';
 
@@ -12,7 +12,7 @@ function containsOffensiveTerm(text: string): boolean {
     return OFFENSIVE_TERMS.some(term => lowerText.includes(term));
 }
 
-function filterMovies(movies: ApiMovie[]): ApiMovie[] {
+function filterMovies(movies: Movie[]): Movie[] {
     return movies.filter(movie => !containsOffensiveTerm(movie.title));
 }
 
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Failed to fetch recommendations', details: errorBody }, { status: response.status });
     }
 
-    const data: ApiMovie[] = await response.json();
+    const data: Movie[] = await response.json();
     const filteredData = filterMovies(data);
     return NextResponse.json(filteredData);
   } catch (error) {

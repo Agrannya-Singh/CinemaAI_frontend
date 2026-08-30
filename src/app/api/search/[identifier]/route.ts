@@ -6,9 +6,9 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://sreenscount
 // This route now proxies search requests to the backend.
 export async function GET(
   request: Request,
-  { params }: { params: { identifier: string } }
+  { params }: { params: Promise<{ identifier: string }> }
 ) {
-  const identifier = params.identifier;
+  const identifier = (await params).identifier;
   try {
     const response = await fetch(`${API_BASE_URL}/search/${encodeURIComponent(identifier)}`);
     
