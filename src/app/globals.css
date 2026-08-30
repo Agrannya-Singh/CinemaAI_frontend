@@ -75,22 +75,166 @@
   }
 }
 
-/* User Customizations */
-/* 1. Smooth Scrolling for the horizontal selection list */
+/* ============================================= */
+/*   TRON-INSPIRED CUSTOM STYLES                */
+/* ============================================= */
+
+/* Scrollbar */
 .overflow-x-auto {
   scrollbar-width: thin;
-  scrollbar-color: #4b5563 #1f2937;
+  scrollbar-color: rgba(6, 182, 212, 0.3) transparent;
 }
 
-/* 2. The "Netflix Red" -> "AI Purple" Gradient */
+/* Animated grid background */
+.tron-grid-bg {
+  background-image: 
+    linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* Horizontal scan line animation */
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+.scanline-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.4), transparent);
+  animation: scanline 8s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Corner bracket decorations (for panels) */
+.tron-panel {
+  position: relative;
+}
+
+.tron-panel::before,
+.tron-panel::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.tron-panel::before {
+  top: -1px;
+  left: -1px;
+  border-top: 2px solid rgba(6, 182, 212, 0.8);
+  border-left: 2px solid rgba(6, 182, 212, 0.8);
+}
+
+.tron-panel::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 2px solid rgba(6, 182, 212, 0.8);
+  border-right: 2px solid rgba(6, 182, 212, 0.8);
+}
+
+/* Glow pulse for key elements */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(6, 182, 212, 0.3), 0 0 20px rgba(6, 182, 212, 0.1); }
+  50% { box-shadow: 0 0 15px rgba(6, 182, 212, 0.5), 0 0 30px rgba(6, 182, 212, 0.2); }
+}
+
+.glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Text glow */
+@keyframes text-flicker {
+  0%, 100% { opacity: 1; text-shadow: 0 0 10px rgba(6, 182, 212, 0.8), 0 0 20px rgba(6, 182, 212, 0.4); }
+  92% { opacity: 1; }
+  93% { opacity: 0.8; }
+  94% { opacity: 1; }
+}
+
+.text-glow {
+  text-shadow: 0 0 10px rgba(6, 182, 212, 0.8), 0 0 20px rgba(6, 182, 212, 0.4), 0 0 40px rgba(6, 182, 212, 0.2);
+  animation: text-flicker 6s ease-in-out infinite;
+}
+
+/* Horizontal divider line with hex accent */
+.hex-divider {
+  position: relative;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.3), transparent);
+}
+
+.hex-divider::after {
+  content: '⬡';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(6, 182, 212, 0.5);
+  font-size: 14px;
+  background: black;
+  padding: 0 8px;
+}
+
+/* Suggest button shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.btn-suggest {
+  background: linear-gradient(90deg, transparent 0%, rgba(6, 182, 212, 0.1) 50%, transparent 100%);
+  background-size: 200% auto;
+  transition: all 0.4s ease;
+}
+
+.btn-suggest:hover {
+  animation: shimmer 2s linear infinite;
+  background-color: rgba(6, 182, 212, 1);
+  color: black;
+}
+
+/* Card glow for TRON */
+.tron-card {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tron-card:hover {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.3), 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Genre row heading underline */
+.genre-heading {
+  position: relative;
+  display: inline-block;
+}
+
+.genre-heading::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 40px;
+  height: 1px;
+  background: rgba(6, 182, 212, 0.6);
+  transition: width 0.3s ease;
+}
+
+.genre-heading:hover::after {
+  width: 100%;
+}
+
+/* Legacy gradient brand (kept for backward compat) */
 .bg-gradient-brand {
-  background: linear-gradient(to right, #ef4444, #9333ea);
+  background: linear-gradient(to right, #06b6d4, #22d3ee);
   -webkit-background-clip: text;
-  background-clip: text; /* Added for standard property */
+  background-clip: text;
   color: transparent;
-}
-
-/* 3. Card Hover Glow */
-.group:hover .shadow-2xl {
-  box-shadow: 0 0 20px rgba(147, 51, 234, 0.5); /* Purple Glow */
 }

@@ -24,13 +24,14 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
                 <Card
                     onClick={() => onSelect(movie)}
                     className={cn(
-                        "group relative overflow-hidden rounded-xl border border-white/10 bg-gray-900 cursor-pointer transition-all duration-500 ease-out",
+                        "tron-card group relative overflow-hidden rounded-none border border-cyan-500/10 bg-black cursor-pointer transition-all duration-500 ease-out",
                         isSelected
-                            ? "ring-2 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)] scale-105"
-                            : "hover:scale-105 hover:shadow-2xl hover:shadow-black/50"
+                            ? "border-cyan-400/60 shadow-[0_0_20px_rgba(6,182,212,0.3)] scale-[1.03]"
+                            : "hover:scale-[1.03] hover:border-cyan-500/30"
                     )}
                 >
                     <CardContent className="p-0 aspect-[2/3] relative">
+                        {/* IMDb Link */}
                         <div 
                             className="absolute top-2 right-2 z-20" 
                             onClick={(e) => e.stopPropagation()} 
@@ -40,31 +41,42 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
                                 href={`https://www.imdb.com/title/${movie.id}/`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="bg-yellow-500 text-black text-xs font-bold px-1.5 py-0.5 rounded shadow hover:bg-yellow-400 transition-colors block"
+                                className="bg-yellow-500/90 text-black text-[10px] font-mono font-bold px-1.5 py-0.5 shadow hover:bg-yellow-400 transition-colors block tracking-wider"
                             >
                                 IMDb
                             </a>
                         </div>
+
+                        {/* Selected indicator - corner accent */}
+                        {isSelected && (
+                            <svg className="absolute top-0 left-0 w-6 h-6 z-10 text-cyan-400" viewBox="0 0 24 24" fill="none">
+                                <polyline points="0,12 0,0 12,0" stroke="currentColor" strokeWidth="2" />
+                            </svg>
+                        )}
+
                         <img
                             src={posterSrc}
                             alt={movie.title}
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                             onError={() => setImageError(true)}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80 transition-opacity duration-300 group-hover:opacity-90" />
+                        
+                        {/* Gradient overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent opacity-70 transition-opacity duration-300 group-hover:opacity-85" />
 
-                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent">
-                            <h3 className="text-white font-bold truncate text-lg mb-1 drop-shadow-md">{movie.title}</h3>
+                        {/* Bottom info panel */}
+                        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black via-black/90 to-transparent">
+                            <h3 className="text-white/90 font-mono font-semibold truncate text-sm mb-1 tracking-wide">{movie.title}</h3>
 
-                            {/* Description added to card face as requested */}
-                            <p className="text-zinc-300 text-xs line-clamp-2 mb-3 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
+                            {/* Description on hover */}
+                            <p className="text-cyan-100/50 text-[10px] font-mono line-clamp-2 mb-2 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
                                 {movie.overview || "No description available."}
                             </p>
 
-                            <div className="flex items-center justify-between text-xs text-white/90">
-                                <div className="flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-md border border-white/10">
-                                    <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                                    <span className="font-medium text-yellow-50">
+                            <div className="flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-1.5 border border-cyan-500/15 px-2 py-0.5 bg-black/50">
+                                    <Star className="w-3 h-3 text-cyan-400 fill-cyan-400/50" />
+                                    <span className="font-mono text-cyan-200/80 text-[10px]">
                                         {movie.score !== undefined
                                             ? (movie.score <= 1.0 
                                                 ? `${(movie.score * 100).toFixed(0)}% Match` 
@@ -78,8 +90,7 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
                 </Card>
             </TooltipTrigger>
             <TooltipContent>
-                <div className="bg-zinc-900 text-white p-2.5 text-xs rounded-lg border border-zinc-800 shadow-xl">
-                    {/* Simplified tooltip just for title if needed, or remove completely if description is on card */}
+                <div className="bg-black text-cyan-100 p-2 text-[10px] font-mono border border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.1)]">
                     {movie.title}
                 </div>
             </TooltipContent>
