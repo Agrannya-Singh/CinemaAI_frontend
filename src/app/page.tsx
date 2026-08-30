@@ -136,9 +136,14 @@ export default function Home() {
     useEffect(() => {
         async function fetchAll() {
             try {
-                const data = await getMovies(1, 1000);
-                setAllMovies(data.data);
-                processGenres(data.data);
+                // Fetch 500 movies in parallel to populate the categories fully 
+                // without hitting the backend's limit=100 constraint.
+                const pages = [1, 2, 3, 4, 5];
+                const responses = await Promise.all(pages.map(p => getMovies(p, 100)));
+                const allFetched = responses.flatMap(res => res.data || []);
+                
+                setAllMovies(allFetched);
+                processGenres(allFetched);
             } catch (e) {
                 console.error("Failed to load DB", e);
             } finally {
