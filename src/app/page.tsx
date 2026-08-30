@@ -227,37 +227,38 @@ export default function Home() {
 
                 {/* Selected Movies Bar */}
                 {selectedMovies.length > 0 && (
-                    <section className="bg-gray-900/50 p-6 rounded-2xl border border-gray-800 animate-in fade-in slide-in-from-bottom-4 mx-4">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-semibold flex items-center gap-2">
-                                <Sparkles className="text-yellow-400" />
-                                Your Inspiration ({selectedMovies.length}/5)
+                    <section className="bg-black/90 p-6 border-2 border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.3)] animate-in fade-in slide-in-from-bottom-4 mx-4 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-50"></div>
+                        <div className="flex items-center justify-between mb-4 relative z-10">
+                            <h2 className="text-xl font-mono text-cyan-400 font-bold uppercase tracking-widest flex items-center gap-3 drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]">
+                                <span className="w-3 h-3 bg-cyan-400 shadow-[0_0_10px_rgba(6,182,212,1)] animate-pulse"></span>
+                                YOUR INSPIRATION [{selectedMovies.length}/5]
                             </h2>
-                            <button onClick={() => setSelectedMovies([])} className="text-sm text-red-400 hover:text-red-300">Clear</button>
+                            <button onClick={() => setSelectedMovies([])} className="text-sm font-mono text-red-500 hover:text-red-400 hover:drop-shadow-[0_0_8px_rgba(239,68,68,0.8)] transition-all">TERMINATE</button>
                         </div>
-                        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+                        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-cyan-600/50 scrollbar-track-transparent">
                             {selectedMovies.map(movie => (
-                                <div key={movie.id} className="min-w-[100px] w-[100px] relative group">
+                                <div key={movie.id} className="min-w-[100px] w-[100px] relative group border border-cyan-500/30">
                                     <img
                                         src={movie.poster_url || "https://placehold.co/100x150?text=No+Image"}
                                         alt={movie.title}
-                                        className="rounded-md w-full h-auto aspect-[2/3] object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                        className="w-full h-auto aspect-[2/3] object-cover opacity-70 group-hover:opacity-100 transition-opacity"
                                     />
                                     <button
                                         onClick={() => toggleSelection(movie)}
-                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-md hover:bg-red-600"
+                                        className="absolute -top-2 -right-2 bg-black border border-cyan-500 text-cyan-500 rounded-none w-5 h-5 flex items-center justify-center text-xs shadow-md hover:bg-cyan-500 hover:text-black transition-colors"
                                     >X</button>
                                 </div>
                             ))}
                         </div>
 
                         {/* Mood Input & Action */}
-                        <div className="mt-6 flex flex-col md:flex-row gap-4 items-end">
+                        <div className="mt-6 flex flex-col md:flex-row gap-4 items-end relative z-10">
                             <div className="flex-1 w-full space-y-2">
-                                <label className="text-sm text-gray-400 ml-1">Current Mood (Optional)</label>
+                                <label className="text-xs font-mono text-cyan-500/80 uppercase tracking-wider ml-1">Current Mood_ (Optional)</label>
                                 <input
                                     placeholder="e.g. 'Something dark but funny' or 'I want to cry'"
-                                    className="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 transition-colors text-white"
+                                    className="w-full bg-black/80 border border-cyan-500/30 px-4 py-3 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_10px_rgba(6,182,212,0.3)] transition-all text-cyan-100 font-mono placeholder:text-cyan-800/50"
                                     value={mood}
                                     onChange={(e) => setMood(e.target.value)}
                                 />
@@ -265,9 +266,9 @@ export default function Home() {
                             <button
                                 onClick={handleRecommend}
                                 disabled={loadingRecs}
-                                className="w-full md:w-auto bg-gradient-brand text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-purple-900/50 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                className="w-full md:w-auto bg-transparent border-2 border-cyan-400 text-cyan-400 font-mono font-bold py-3 px-10 shadow-[0_0_15px_rgba(6,182,212,0.2)] hover:bg-cyan-400 hover:text-black hover:shadow-[0_0_20px_rgba(6,182,212,0.6)] transition-all disabled:opacity-50 flex items-center justify-center gap-3 uppercase tracking-widest"
                             >
-                                {loadingRecs ? <Loader2 className="animate-spin" /> : <><Sparkles className="w-5 h-5" /> Curate For Me</>}
+                                {loadingRecs ? <Loader2 className="animate-spin" /> : "SUGGEST"}
                             </button>
                         </div>
                     </section>
@@ -276,9 +277,13 @@ export default function Home() {
                 {/* 1. Recommendations Mode */}
                 {showRecommendations && recommendations && (
                     <section className="space-y-8 animate-in fade-in px-4">
-                        <div className="bg-gray-900/80 border border-purple-500/30 p-6 rounded-2xl">
-                            <h3 className="text-purple-400 font-bold mb-2 text-sm uppercase tracking-wider">ScreenScout AI</h3>
-                            <p className="text-lg leading-relaxed text-gray-200">
+                        <div className="bg-black border border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.2)] p-6 relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-1 h-full bg-cyan-400 shadow-[0_0_10px_rgba(6,182,212,1)]"></div>
+                            <h3 className="text-cyan-400 font-mono font-bold mb-3 text-sm uppercase tracking-wider flex items-center gap-2">
+                                <span className="w-2 h-2 bg-cyan-400 animate-pulse"></span>
+                                SYSTEM_RESPONSE::ANALYSIS
+                            </h3>
+                            <p className="text-lg leading-relaxed text-cyan-50 font-mono text-sm opacity-90">
                                 {recommendations.ai_response}
                             </p>
                         </div>

@@ -31,13 +31,16 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
                     )}
                 >
                     <CardContent className="p-0 aspect-[2/3] relative">
-                        <div className="absolute top-2 right-2 z-20">
+                        <div 
+                            className="absolute top-2 right-2 z-20" 
+                            onClick={(e) => e.stopPropagation()} 
+                            onPointerDown={(e) => e.stopPropagation()}
+                        >
                             <a
-                                href={`https://www.imdb.com/title/${movie.id}`}
+                                href={`https://www.imdb.com/title/${movie.id}/`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="bg-yellow-500 text-black text-xs font-bold px-1.5 py-0.5 rounded shadow hover:bg-yellow-400 transition-colors"
+                                className="bg-yellow-500 text-black text-xs font-bold px-1.5 py-0.5 rounded shadow hover:bg-yellow-400 transition-colors block"
                             >
                                 IMDb
                             </a>
