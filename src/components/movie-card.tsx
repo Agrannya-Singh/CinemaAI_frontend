@@ -31,6 +31,17 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
                     )}
                 >
                     <CardContent className="p-0 aspect-[2/3] relative">
+                        <div className="absolute top-2 right-2 z-20">
+                            <a
+                                href={`https://www.imdb.com/title/${movie.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="bg-yellow-500 text-black text-xs font-bold px-1.5 py-0.5 rounded shadow hover:bg-yellow-400 transition-colors"
+                            >
+                                IMDb
+                            </a>
+                        </div>
                         <img
                             src={posterSrc}
                             alt={movie.title}
@@ -51,8 +62,10 @@ export function MovieCard({ movie, isSelected, onSelect }: MovieCardProps) {
                                 <div className="flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-md border border-white/10">
                                     <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
                                     <span className="font-medium text-yellow-50">
-                                        {movie.score
-                                            ? `${movie.score.toFixed(1)}/10`
+                                        {movie.score !== undefined
+                                            ? (movie.score <= 1.0 
+                                                ? `${(movie.score * 100).toFixed(0)}% Match` 
+                                                : `${movie.score.toFixed(1)}/10`)
                                             : (movie.release_date?.split('-')[0] || 'N/A')}
                                     </span>
                                 </div>

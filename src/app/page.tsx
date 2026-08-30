@@ -191,8 +191,8 @@ export default function Home() {
 
                 {/* Header */}
                 <header className="text-center space-y-4 pt-10 px-4">
-                    <h1 className="text-5xl font-extrabold tracking-tighter">
-                        Screen<span className="bg-gradient-brand">Scout</span>
+                    <h1 className="text-6xl font-black uppercase tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-cyan-200 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)] font-mono">
+                        Screen<span className="text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]">Scout</span>
                     </h1>
                     <p className="text-xl text-gray-400">
                         Tell us what you like. We'll find what you love.
