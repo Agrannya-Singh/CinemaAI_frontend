@@ -242,8 +242,6 @@ export default function Home() {
 
     return (
         <main className="min-h-screen bg-black text-white pb-20 overflow-x-hidden tron-grid-bg relative">
-            {/* Subtle scanline effect */}
-            <div className="scanline-overlay fixed inset-0 pointer-events-none z-50" />
             
             <div className="max-w-[1600px] mx-auto space-y-10 px-6 md:px-8 relative z-10">
 

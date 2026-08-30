@@ -93,25 +93,6 @@
   background-size: 60px 60px;
 }
 
-/* Horizontal scan line animation */
-@keyframes scanline {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
-}
-
-.scanline-overlay::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.4), transparent);
-  animation: scanline 8s linear infinite;
-  pointer-events: none;
-  z-index: 0;
-}
-
 /* Corner bracket decorations (for panels) */
 .tron-panel {
   position: relative;
