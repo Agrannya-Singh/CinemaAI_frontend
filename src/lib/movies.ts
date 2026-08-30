@@ -23,7 +23,7 @@ export interface PaginatedMovies {
     meta: PaginationMeta;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://semantic-recommendation-service.onrender.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://sreenscount-rag-bmhxbshag6gdfeb8.southeastasia-01.azurewebsites.net';
 
 // 1. Get All Movies (Paginated)
 export async function getMovies(page: number = 1, limit: number = 24): Promise<PaginatedMovies> {
