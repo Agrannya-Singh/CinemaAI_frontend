@@ -425,13 +425,8 @@ export default function Home() {
                     <section className="space-y-10 pb-20">
                         {loadingFeed ? (
                             <div className="flex flex-col items-center justify-center py-40 gap-4">
-                                <div className="relative">
-                                    <svg viewBox="0 0 80 80" className="w-16 h-16 text-cyan-500/30 animate-spin" style={{ animationDuration: '3s' }}>
-                                        <polygon points="40,5 75,25 75,55 40,75 5,55 5,25" stroke="currentColor" strokeWidth="1" fill="none" />
-                                    </svg>
-                                    <Loader2 className="animate-spin w-8 h-8 text-cyan-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                                </div>
-                                <p className="text-xs font-mono text-cyan-500/40 uppercase tracking-widest">Loading Database</p>
+                                <Loader2 className="animate-spin w-10 h-10 text-cyan-400" />
+                                <p className="text-xs font-mono text-cyan-500/40 uppercase tracking-widest">Loading</p>
                             </div>
                         ) : (
                             <>
