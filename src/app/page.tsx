@@ -98,16 +98,19 @@ export default function Home() {
 
     // Genre Processing Logic
     const processGenres = (movies: Movie[]) => {
+        // Shuffle movies to randomize the feed on every reload
+        const shuffledMovies = [...movies].sort(() => 0.5 - Math.random());
+        
         const groups: { [key: string]: Movie[] } = {};
 
         // 1. Top Rated Group
-        groups["Top Rated"] = movies.filter(m => (m.vote_average || 0) >= 8.0).slice(0, 20);
+        groups["Top Rated"] = shuffledMovies.filter(m => (m.score || 0) >= 8.0).slice(0, 20);
 
         // 2. Discover (Random / Recent)
-        groups["Discover"] = movies.slice(0, 20); // First 20 as they are sorted by popularity often
+        groups["Discover"] = shuffledMovies.slice(0, 20);
 
         // 3. Genre Groups
-        movies.forEach(movie => {
+        shuffledMovies.forEach(movie => {
             if (movie.genres) {
                 // Handle different potential delimiters
                 let genreList: string[] = [];
