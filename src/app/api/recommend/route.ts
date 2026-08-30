@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import type { ApiMovie } from '@/lib/movies';
 
-const API_BASE_URL = 'https://cinemaai-backend.onrender.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://sreenscount-rag-bmhxbshag6gdfeb8.southeastasia-01.azurewebsites.net';
 
 const OFFENSIVE_TERMS = ['nigger'];
 

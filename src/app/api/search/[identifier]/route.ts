@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 
-const API_BASE_URL = 'https://cinemaai-backend.onrender.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://sreenscount-rag-bmhxbshag6gdfeb8.southeastasia-01.azurewebsites.net';
 
 // This route now proxies search requests to the backend.
 export async function GET(
