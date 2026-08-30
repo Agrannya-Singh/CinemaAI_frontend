@@ -279,63 +279,83 @@ export default function Home() {
 
             {/* Netflix Style TRON Hero Section */}
             {featuredMovie && isMainFeedActive && (
-                <div className="relative w-full h-[85vh] min-h-[600px] max-h-[900px] flex items-end pb-32 md:pb-40 px-6 md:px-12 z-0 group">
+                <div className="relative w-full h-[85vh] min-h-[600px] max-h-[900px] flex items-center md:items-end pb-24 md:pb-32 px-6 md:px-12 z-0 group overflow-hidden">
                     {/* Background Artwork */}
-                    <div className="absolute inset-0 z-0 overflow-hidden bg-black">
+                    <div className="absolute inset-0 z-0 bg-black">
+                        {/* We use the poster as the background, heavily blurred and dimmed */}
                         <img 
                             src={featuredMovie.poster_url || "https://placehold.co/1920x1080?text=No+Image"} 
                             alt={featuredMovie.title}
-                            className="w-full h-full object-cover opacity-40 scale-105 group-hover:scale-100 transition-transform duration-[10s] ease-out object-top" 
+                            className="w-full h-full object-cover opacity-20 blur-xl scale-110" 
                         />
-                        {/* Gradients to fade into background */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
-                        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent"></div>
-                        {/* TRON grid overlay over the image */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/50 to-transparent"></div>
                         <div className="absolute inset-0 tron-grid-bg opacity-40 mix-blend-screen pointer-events-none"></div>
                     </div>
 
-                    {/* Hero Content */}
-                    <div className="relative z-10 max-w-3xl space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-                        <div className="flex items-center gap-3">
-                            <span className="text-cyan-400 text-[10px] font-mono font-bold tracking-[0.3em] uppercase border border-cyan-400/50 px-2 py-0.5 bg-cyan-950/50 shadow-[0_0_10px_rgba(6,182,212,0.3)]">
-                                Featured Input
-                            </span>
-                            {featuredMovie.score && (
-                                <span className="text-cyan-200/80 text-[10px] font-mono tracking-widest border border-cyan-500/20 px-2 py-0.5 bg-black/50">
-                                    RATING: {featuredMovie.score.toFixed(1)}/10
-                                </span>
-                            )}
-                        </div>
-                        <h2 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase font-mono text-white text-glow leading-none drop-shadow-2xl tracking-tighter">
-                            {featuredMovie.title}
-                        </h2>
-                        <p className="text-cyan-50/80 text-sm md:text-base font-mono max-w-2xl line-clamp-3 leading-relaxed drop-shadow-md border-l-2 border-cyan-500/30 pl-4">
-                            {featuredMovie.overview}
-                        </p>
+                    {/* Hero Content Grid */}
+                    <div className="relative z-10 w-full max-w-[1600px] mx-auto flex flex-col md:flex-row items-center md:items-end justify-between gap-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-20 md:mt-0">
                         
-                        <div className="flex flex-wrap items-center gap-4 pt-4">
-                            <button 
-                                onClick={() => toggleSelection(featuredMovie)} 
-                                className={`flex items-center gap-2 font-mono font-bold py-3 px-8 uppercase tracking-widest transition-all ${
-                                    isSelected 
-                                    ? 'bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.3)]' 
-                                    : 'btn-suggest border border-cyan-400/60 text-cyan-400 hover:text-black shadow-[0_0_15px_rgba(6,182,212,0.3)] bg-black/40 backdrop-blur-sm hover:bg-cyan-400'
-                                }`}
-                            >
-                                {isSelected ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-                                {isSelected ? 'Input Logged' : 'Log Input'}
-                            </button>
+                        {/* Left: Text Content */}
+                        <div className="max-w-3xl space-y-6 w-full">
+                            <div className="flex items-center gap-3">
+                                <span className="text-cyan-400 text-[10px] font-mono font-bold tracking-[0.3em] uppercase border border-cyan-400/50 px-2 py-0.5 bg-cyan-950/50 shadow-[0_0_10px_rgba(6,182,212,0.3)]">
+                                    Featured Input
+                                </span>
+                                {featuredMovie.score && (
+                                    <span className="text-cyan-200/80 text-[10px] font-mono tracking-widest border border-cyan-500/20 px-2 py-0.5 bg-black/50">
+                                        RATING: {featuredMovie.score.toFixed(1)}/10
+                                    </span>
+                                )}
+                            </div>
+                            <h2 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase font-mono text-white text-glow leading-none drop-shadow-2xl tracking-tighter">
+                                {featuredMovie.title}
+                            </h2>
+                            <p className="text-cyan-50/80 text-sm md:text-base font-mono max-w-2xl line-clamp-3 md:line-clamp-4 leading-relaxed drop-shadow-md border-l-2 border-cyan-500/30 pl-4">
+                                {featuredMovie.overview}
+                            </p>
                             
-                            <a 
-                                href={`https://www.imdb.com/title/${featuredMovie.id}/`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 bg-black/60 border border-cyan-500/30 text-cyan-100 hover:text-cyan-400 font-mono font-bold py-3 px-8 uppercase tracking-widest transition-colors hover:border-cyan-400 hover:bg-black/80 backdrop-blur-sm shadow-[0_0_10px_rgba(0,0,0,0.5)]"
-                            >
-                                <Info className="w-5 h-5" />
-                                Database Info
-                            </a>
+                            <div className="flex flex-wrap items-center gap-4 pt-4">
+                                <button 
+                                    onClick={() => toggleSelection(featuredMovie)} 
+                                    className={`flex items-center gap-2 font-mono font-bold py-3 px-8 uppercase tracking-widest transition-all ${
+                                        isSelected 
+                                        ? 'bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.3)]' 
+                                        : 'btn-suggest border border-cyan-400/60 text-cyan-400 hover:text-black shadow-[0_0_15px_rgba(6,182,212,0.3)] bg-black/40 backdrop-blur-sm hover:bg-cyan-400'
+                                    }`}
+                                >
+                                    {isSelected ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                                    {isSelected ? 'Input Logged' : 'Log Input'}
+                                </button>
+                                
+                                <a 
+                                    href={`https://www.imdb.com/title/${featuredMovie.id}/`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 bg-black/60 border border-cyan-500/30 text-cyan-100 hover:text-cyan-400 font-mono font-bold py-3 px-8 uppercase tracking-widest transition-colors hover:border-cyan-400 hover:bg-black/80 backdrop-blur-sm shadow-[0_0_10px_rgba(0,0,0,0.5)]"
+                                >
+                                    <Info className="w-5 h-5" />
+                                    Database Info
+                                </a>
+                            </div>
                         </div>
+
+                        {/* Right: Sharp Poster Image (Desktop only) */}
+                        <div className="hidden md:block shrink-0 relative mr-4 lg:mr-12 xl:mr-24 perspective-1000">
+                            <div 
+                                className="w-[240px] lg:w-[320px] xl:w-[360px] aspect-[2/3] relative transform group-hover:scale-[1.02] transition-all duration-700 shadow-[0_0_50px_rgba(6,182,212,0.25)] border border-cyan-500/40 bg-black"
+                                style={{ transform: 'perspective(1000px) rotateY(-12deg)' }}
+                            >
+                                <img 
+                                    src={featuredMovie.poster_url || "https://placehold.co/600x900?text=No+Image"} 
+                                    alt={featuredMovie.title}
+                                    className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                                />
+                                <CornerPolygons />
+                                <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 to-transparent pointer-events-none mix-blend-screen opacity-50"></div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             )}
