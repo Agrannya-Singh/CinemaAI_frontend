@@ -3,7 +3,64 @@
 import { useState, useEffect, useRef } from "react";
 import { Movie, searchMovies, getRecommendations, getMovies } from "@/lib/movies";
 import { MovieCard } from "@/components/movie-card";
+import { MermaidDiagram } from "@/components/mermaid";
 import { Loader2, Search, ChevronRight, ChevronLeft, Info, Plus, Check } from "lucide-react";
+
+const architectureDiagram = `
+flowchart TB
+    %% Styling
+    classDef frontend fill:#3178c6,stroke:#fff,stroke-width:2px,color:#fff
+    classDef azure fill:#0078d4,stroke:#fff,stroke-width:2px,color:#fff
+    classDef render fill:#46E3B7,stroke:#1e1e1e,stroke-width:2px,color:#1e1e1e
+    classDef database fill:#000,stroke:#46E3B7,stroke-width:2px,color:#fff
+    classDef ai fill:#f25022,stroke:#fff,stroke-width:2px,color:#fff
+    classDef tooling fill:#ffb900,stroke:#1e1e1e,stroke-width:2px,color:#1e1e1e
+
+    User((End User))
+
+    subgraph Frontend [Frontend Layer]
+        NextJS["Next.js Application"]:::frontend
+    end
+
+    subgraph Prod [Production Environment]
+        AzureAPI["Azure Instance<br/>(FastAPI / Oryx)"]:::azure
+    end
+
+    subgraph Dev [Branch / Dev Environment]
+        RenderAPI["Render Cloud Instance<br/>(FastAPI / Docker)"]:::render
+    end
+
+    subgraph Services [Intelligence & Persistence]
+        SQLite[("Local SQLite<br/>(Metadata)")]:::database
+        Pinecone[("Pinecone DB<br/>(Vector Storage)")]:::database
+        
+        OpenRouter["OpenRouter API<br/>(BAAI Embeddings)"]:::ai
+        PCInference["Pinecone Inference<br/>(BGE CrossEncoder Reranker)"]:::ai
+    end
+
+    subgraph Ops [Testing & Operations Tooling]
+        RenderMCP[["Render MCP Server<br/>(AI CLI Management)"]]:::tooling
+        MVCJudge["Future MVC Server<br/>(LLM-as-a-Judge Eval)"]:::tooling
+        AI((AI Assistant))
+    end
+
+    %% User Flow
+    User -->|Interacts| NextJS
+    NextJS -->|Production Traffic| AzureAPI
+    NextJS -.->|Dev/Preview Traffic| RenderAPI
+
+    %% Backend Services Flow
+    AzureAPI & RenderAPI -->|1. Generate Embeddings| OpenRouter
+    AzureAPI & RenderAPI -->|2. Top-200 Retrieval| Pinecone
+    AzureAPI & RenderAPI -->|3. Fetch Details| SQLite
+    AzureAPI & RenderAPI -->|4. Top-5 Reranking| PCInference
+
+    %% Tooling Flow
+    AI -.->|Execute Commands| RenderMCP
+    RenderMCP -.->|Deploy/Monitor| Dev
+    MVCJudge -.->|Automated Evals| Dev
+`;
+
 
 // --- SVG Decorative Components ---
 
@@ -533,6 +590,22 @@ export default function Home() {
                         )}
                     </section>
                 )}
+
+                {/* 4. Architecture Showcase Section */}
+                <section className="mt-20 pt-10 border-t border-cyan-500/20 px-6 md:px-12 pb-10">
+                    <div className="flex items-center gap-3 mb-8 justify-center">
+                        <HexagonIcon className="w-6 h-6 text-cyan-400" />
+                        <h2 className="text-2xl font-mono font-bold text-cyan-100 uppercase tracking-widest text-glow">
+                            System Architecture
+                        </h2>
+                    </div>
+                    <p className="text-cyan-500/70 font-mono text-center max-w-2xl mx-auto mb-10 text-sm">
+                        Semantic Recommendation Service Infrastructure showing Production, Dev, and AI persistence layers.
+                    </p>
+                    <div className="max-w-4xl mx-auto">
+                        <MermaidDiagram chart={architectureDiagram} />
+                    </div>
+                </section>
             </div>
         </main>
     );
